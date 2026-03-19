@@ -1,0 +1,96 @@
+name: ⭐️Feature Request
+description: Suggest an improvement for Spring PetClinic.
+title: "feature: "
+labels: ["Type: Feature", "Status: Triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Spring PetClinic feature request
+        Describe the problem you want to solve and how the proposal fits the current sample application.
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem Statement
+      description: What limitation, missing capability, or friction in the current project does this address?
+      placeholder: It is difficult to demonstrate [...] in the current PetClinic sample because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the change you would like to see.
+      placeholder: Add support for ..., update the UI to ..., or extend the sample to demonstrate ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Primary Area
+      description: Which part of the project would this mostly affect?
+      options:
+        - Owners
+        - Pets / Visits
+        - Vets
+        - Database / Persistence
+        - Build / Test infrastructure
+        - UI / Thymeleaf templates
+        - Documentation
+        - Cross-cutting
+    validations:
+      required: true
+
+  - type: textarea
+    id: project-fit
+    attributes:
+      label: Project Fit
+      description: Explain why this belongs in Spring PetClinic specifically.
+      placeholder: This would improve PetClinic as a Spring sample by demonstrating ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative approaches or workarounds you considered.
+      placeholder: Keeping the current behavior is insufficient because ...
+
+  - type: checkboxes
+    id: contribution-notes
+    attributes:
+      label: Contribution Notes
+      description: Confirm any items that already apply to your proposal.
+      options:
+        - label: I am willing to help implement this change.
+        - label: I expect tests or sample coverage would need to be updated.
+        - label: I have checked that this is not already covered in an existing issue or recent pull request.
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add mockups, sample payloads, related issues, or screenshots if helpful.
+      placeholder: Include links, screenshots, or extra implementation notes here.
+
+  - type: checkboxes
+    id: ai-disclosure
+    attributes:
+      label: AI Disclosure
+      description: Disclose AI assistance used to draft this request.
+      options:
+        - label: This feature proposal was assisted by AI.
+          required: false
+
+  - type: input
+    id: ai-model
+    attributes:
+      label: AI Model Name
+      description: If AI was used, which model did you use?
+      placeholder: e.g. Claude 4.6 Sonnet, GPT-5, etc.
+    validations:
+      required: false

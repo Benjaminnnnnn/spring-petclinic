@@ -1,0 +1,110 @@
+name: 🐞Bug Report
+description: Report a reproducible problem in Spring PetClinic.
+title: "bug: "
+labels: ["Type: Bug", "Status: Triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Spring PetClinic bug report
+        Please provide enough detail for maintainers to reproduce the problem in this repository.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise summary of the problem.
+      placeholder: Describe the issue and which part of PetClinic is affected.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Clear, numbered steps to reproduce the issue from a fresh application start if possible.
+      placeholder: |
+        1. Start the app with `./mvnw spring-boot:run`
+        2. Open `http://localhost:8080`
+        3. Navigate to Owners > Find Owners
+        4. Submit ...
+        5. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened, including errors or unexpected UI behavior?
+      placeholder: The request returned a 500 error and the owner details page did not render.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen instead?
+      placeholder: The owner details page should render with the newly added pet.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Impacted Area
+      description: Which part of Spring PetClinic is affected?
+      options:
+        - Owners
+        - Pets / Visits
+        - Vets
+        - Database / Persistence
+        - Build / Test infrastructure
+        - UI / Thymeleaf templates
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: build-tool
+    attributes:
+      label: Build Tool
+      description: Which build or run path were you using when you saw the issue?
+      options:
+        - Maven
+        - Gradle
+        - Both
+        - Not applicable
+    validations:
+      required: true
+
+  - type: dropdown
+    id: database
+    attributes:
+      label: Database Profile
+      description: Which database configuration were you using?
+      options:
+        - H2 (default)
+        - MySQL
+        - PostgreSQL
+        - Not applicable / unknown
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, Java version, and browser if the issue is UI-related.
+      placeholder: e.g. macOS 15, Temurin 21, Chrome 134
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Add stack traces, logs, screenshots, profile settings, or relevant links here.
+      placeholder: Paste the exception, attach a screenshot, or include the command you ran.
+    validations:
+      required: false
