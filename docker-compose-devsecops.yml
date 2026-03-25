@@ -128,18 +128,18 @@ services:
       timeout: 10s
       retries: 3
 
-  # Burp Suite (using community edition via custom setup)
-  # Note: Burp Suite doesn't have official Docker image, using alternative approach
+  # Burp Suite Alternative - Using OWASP ZAP with Burp-compatible reporting
+  # Note: Burp Suite Community Edition doesn't support headless/Docker deployment
+  # Using ZAP as it provides similar functionality with better automation support
   burpsuite:
-    image: raesene/burp-rest-api
+    image: zaproxy/zap-stable
     container_name: burpsuite
     networks:
       - devsecops-network
+    command: zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true -config api.key=burp-api-key
     ports:
       - "8090:8090"
       - "8080:8080"
-    environment:
-      - BURP_HEADLESS=true
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8090 || exit 1"]
       interval: 30s

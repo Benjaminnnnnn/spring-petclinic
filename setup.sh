@@ -92,3 +92,33 @@ echo ""
 echo -e "${GREEN}Or use the setup script:${NC}"
 echo -e "${NC}  ./setup-devsecops.sh${NC}"
 echo ""
+
+
+echo "=========================================="
+echo "Starting DevSecOps Services"
+echo "=========================================="
+echo ""
+
+# Start all services
+echo "Starting Docker Compose services..."
+docker compose -f docker-compose-devsecops.yml up -d
+
+echo ""
+echo "=========================================="
+echo "Services Started!"
+echo "=========================================="
+echo ""
+echo "Access your services at:"
+echo "  Jenkins:    http://localhost:8081"
+echo "  SonarQube:  http://localhost:9000 (admin/admin)"
+echo "  Prometheus: http://localhost:9090"
+echo "  Grafana:    http://localhost:3000 (admin/admin)"
+echo "  OWASP ZAP:  http://localhost:8090"
+echo ""
+echo "Check status with:"
+echo "  docker compose -f docker-compose-devsecops.yml ps"
+echo ""
+echo "View logs with:"
+echo "  docker compose -f docker-compose-devsecops.yml logs -f [service-name]"
+echo ""
+
