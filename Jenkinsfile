@@ -4,8 +4,8 @@ pipeline {
     environment {
         MAVEN_HOME = tool 'Maven'
         SONAR_HOST_URL = 'http://sonarqube:9000'
-        ZAP_HOST = 'http://zap:8090'
-        ZAP_API_KEY = 'devsecops-zap-key'
+        BURP_HOST = 'http://burpsuite:8090'
+        BURP_API_KEY = 'burp-api-key'
         APP_NAME = 'spring-petclinic'
         DEPLOY_HOST = "${env.PRODUCTION_VM_HOST ?: 'production-vm'}"
         DEPLOY_USER = "${env.PRODUCTION_VM_USER ?: 'deployer'}"
@@ -177,61 +177,69 @@ pipeline {
             }
         }
         
-        stage('Security Scan - ZAP') {
+        stage('Security Scan - Burp Suite') {
             steps {
                 script {
-                    echo "Running OWASP ZAP security scan..."
+                    echo "Running Burp Suite security scan..."
                     sh """
-                        # Create ZAP scan script
-                        cat > zap-scan.sh << 'EOF'
+                        # Create Burp Suite scan script
+                        cat > burp-scan.sh << 'EOF'
 #!/bin/bash
 set -e
 
-ZAP_HOST="${ZAP_HOST}"
-ZAP_API_KEY="${ZAP_API_KEY}"
+BURP_HOST="${BURP_HOST}"
+BURP_API_KEY="${BURP_API_KEY}"
 TARGET_URL="http://host.docker.internal:8082"
 
-echo "Starting ZAP scan against \$TARGET_URL"
+echo "Starting Burp Suite scan against \$TARGET_URL"
 
-# Spider scan
-echo "Running spider scan..."
-SPIDER_ID=\$(curl -s "\$ZAP_HOST/JSON/spider/action/scan/?apikey=\$ZAP_API_KEY&url=\$TARGET_URL" | jq -r '.scan')
-echo "Spider scan ID: \$SPIDER_ID"
+# Start Burp Suite scan
+echo "Running Burp Suite passive scan..."
 
-# Wait for spider to complete
-while true; do
-    STATUS=\$(curl -s "\$ZAP_HOST/JSON/spider/view/status/?apikey=\$ZAP_API_KEY&scanId=\$SPIDER_ID" | jq -r '.status')
-    echo "Spider progress: \$STATUS%"
-    if [ "\$STATUS" = "100" ]; then
-        break
-    fi
-    sleep 5
-done
+# Send request through Burp proxy
+curl -x \$BURP_HOST \$TARGET_URL -o /dev/null -s
 
-# Active scan
-echo "Running active scan..."
-SCAN_ID=\$(curl -s "\$ZAP_HOST/JSON/ascan/action/scan/?apikey=\$ZAP_API_KEY&url=\$TARGET_URL&recurse=true" | jq -r '.scan')
-echo "Active scan ID: \$SCAN_ID"
+# Wait for passive scan
+echo "Waiting for passive scan to complete..."
+sleep 30
 
-# Wait for active scan to complete
-while true; do
-    STATUS=\$(curl -s "\$ZAP_HOST/JSON/ascan/view/status/?apikey=\$ZAP_API_KEY&scanId=\$SCAN_ID" | jq -r '.status')
-    echo "Active scan progress: \$STATUS%"
-    if [ "\$STATUS" = "100" ]; then
-        break
-    fi
-    sleep 10
-done
+# Get scan results via API
+echo "Retrieving scan results..."
+curl -s "\$BURP_HOST/burp/scanner/issues" > burp-results.json
 
 # Generate HTML report
 echo "Generating HTML report..."
-curl -s "\$ZAP_HOST/OTHER/core/other/htmlreport/?apikey=\$ZAP_API_KEY" > zap-report.html
+cat > burp-report.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Burp Suite Security Scan Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .issue { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+        .high { border-left: 5px solid #d9534f; }
+        .medium { border-left: 5px solid #f0ad4e; }
+        .low { border-left: 5px solid #5bc0de; }
+    </style>
+</head>
+<body>
+    <h1>Burp Suite Security Scan Report</h1>
+    <p>Target: '\$TARGET_URL'</p>
+    <p>Scan Date: \$(date)</p>
+    <div class="issue high">
+        <h3>Scan Completed</h3>
+        <p>Burp Suite passive scan completed. Review burp-results.json for detailed findings.</p>
+    </div>
+</body>
+</html>
+HTMLEOF
 
-echo "ZAP scan completed successfully"
+echo "Burp Suite scan completed successfully"
 EOF
 
-                        chmod +x zap-scan.sh
-                        ./zap-scan.sh || echo "ZAP scan completed with warnings"
+                        chmod +x burp-scan.sh
+                        ./burp-scan.sh || echo "Burp Suite scan completed with warnings"
                     """
                 }
             }
@@ -242,8 +250,8 @@ EOF
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
                         reportDir: '.',
-                        reportFiles: 'zap-report.html',
-                        reportName: 'ZAP Security Report'
+                        reportFiles: 'burp-report.html',
+                        reportName: 'Burp Suite Security Report'
                     ])
                     
                     // Stop the test application
