@@ -1,0 +1,186 @@
+---
+- name: Deploy Spring PetClinic to Production VM
+  hosts: production
+  become: yes
+  vars:
+    app_name: "{{ app_name | default('spring-petclinic') }}"
+    app_version: "{{ app_version | default('latest') }}"
+    app_port: 8080
+    app_user: petclinic
+    app_home: /opt/petclinic
+    
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+      
+    - name: Install required packages
+      package:
+        name:
+          - openjdk-17-jdk
+          - docker.io
+          - curl
+        state: present
+        
+    - name: Create application user
+      user:
+        name: "{{ app_user }}"
+        system: yes
+        shell: /bin/bash
+        home: "{{ app_home }}"
+        create_home: yes
+        
+    - name: Create application directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0755'
+      loop:
+        - "{{ app_home }}"
+        - "{{ app_home }}/logs"
+        - "{{ app_home }}/config"
+        
+    - name: Stop existing application
+      systemd:
+        name: petclinic
+        state: stopped
+      ignore_errors: yes
+      
+    - name: Pull Docker image from Jenkins host
+      docker_image:
+        name: "{{ app_name }}:{{ app_version }}"
+        source: pull
+      ignore_errors: yes
+      
+    - name: Export Docker image to tar (if Docker registry not available)
+      delegate_to: localhost
+      shell: |
+        docker save {{ app_name }}:{{ app_version }} -o /tmp/{{ app_name }}-{{ app_version }}.tar
+      when: false  # Enable if using tar transfer method
+      
+    - name: Copy Docker image tar to production VM
+      copy:
+        src: "/tmp/{{ app_name }}-{{ app_version }}.tar"
+        dest: "{{ app_home }}/{{ app_name }}-{{ app_version }}.tar"
+      when: false  # Enable if using tar transfer method
+      
+    - name: Load Docker image from tar
+      shell: |
+        docker load -i {{ app_home }}/{{ app_name }}-{{ app_version }}.tar
+      when: false  # Enable if using tar transfer method
+      
+    - name: Extract JAR from Docker image
+      shell: |
+        # Create temporary container
+        CONTAINER_ID=$(docker create {{ app_name }}:{{ app_version }})
+        
+        # Copy JAR file from container
+        docker cp $CONTAINER_ID:/workspace/BOOT-INF/classes/. {{ app_home }}/classes/ || true
+        docker cp $CONTAINER_ID:/workspace/BOOT-INF/lib/. {{ app_home }}/lib/ || true
+        docker cp $CONTAINER_ID:/app.jar {{ app_home }}/{{ app_name }}.jar || true
+        
+        # Remove temporary container
+        docker rm $CONTAINER_ID
+        
+        # Fallback: if JAR extraction failed, try to find it in target
+        if [ ! -f {{ app_home }}/{{ app_name }}.jar ]; then
+          echo "JAR not found in Docker image, will use direct transfer"
+        fi
+      ignore_errors: yes
+      
+    - name: Copy JAR file directly from Jenkins workspace (fallback)
+      copy:
+        src: "{{ playbook_dir }}/../target/spring-petclinic-4.0.0-SNAPSHOT.jar"
+        dest: "{{ app_home }}/{{ app_name }}.jar"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0644'
+      
+    - name: Create application configuration
+      copy:
+        dest: "{{ app_home }}/config/application.properties"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0644'
+        content: |
+          server.port={{ app_port }}
+          spring.application.name={{ app_name }}
+          
+          # Actuator endpoints for monitoring
+          management.endpoints.web.exposure.include=*
+          management.endpoint.health.show-details=always
+          management.metrics.export.prometheus.enabled=true
+          
+          # Logging
+          logging.file.name={{ app_home }}/logs/application.log
+          logging.level.root=INFO
+          logging.level.org.springframework.samples.petclinic=DEBUG
+          
+    - name: Create systemd service file
+      copy:
+        dest: /etc/systemd/system/petclinic.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Spring PetClinic Application
+          After=network.target
+          
+          [Service]
+          Type=simple
+          User={{ app_user }}
+          Group={{ app_user }}
+          WorkingDirectory={{ app_home }}
+          ExecStart=/usr/bin/java -jar {{ app_home }}/{{ app_name }}.jar --spring.config.location={{ app_home }}/config/application.properties
+          Restart=always
+          RestartSec=10
+          StandardOutput=journal
+          StandardError=journal
+          SyslogIdentifier=petclinic
+          
+          # Security settings
+          NoNewPrivileges=true
+          PrivateTmp=true
+          
+          # Resource limits
+          LimitNOFILE=65536
+          
+          [Install]
+          WantedBy=multi-user.target
+          
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+        
+    - name: Enable and start petclinic service
+      systemd:
+        name: petclinic
+        enabled: yes
+        state: started
+        
+    - name: Wait for application to start
+      wait_for:
+        port: "{{ app_port }}"
+        delay: 5
+        timeout: 60
+        
+    - name: Verify application health
+      uri:
+        url: "http://localhost:{{ app_port }}/actuator/health"
+        method: GET
+        status_code: 200
+      register: health_check
+      retries: 5
+      delay: 10
+      until: health_check.status == 200
+      
+    - name: Display deployment information
+      debug:
+        msg:
+          - "Application deployed successfully!"
+          - "Version: {{ app_version }}"
+          - "URL: http://{{ ansible_host }}:{{ app_port }}"
+          - "Health: {{ health_check.json.status }}"

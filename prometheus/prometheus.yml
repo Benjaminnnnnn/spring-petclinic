@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'devsecops-monitor'
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Jenkins metrics
+  - job_name: 'jenkins'
+    metrics_path: '/prometheus'
+    static_configs:
+      - targets: ['jenkins:8080']
+    scrape_interval: 30s
+
+  # Spring Boot Actuator metrics (for deployed application)
+  - job_name: 'spring-petclinic'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+    scrape_interval: 30s
+
+  # SonarQube metrics
+  - job_name: 'sonarqube'
+    metrics_path: '/api/monitoring/metrics'
+    static_configs:
+      - targets: ['sonarqube:9000']
+    scrape_interval: 60s
