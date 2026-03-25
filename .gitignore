@@ -46,3 +46,9 @@ out/
 _site/
 *.css
 !petclinic.css
+
+
+### md & pdf ###
+*.md
+*.pdf
+!README.md

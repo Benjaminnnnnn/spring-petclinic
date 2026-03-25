@@ -1,0 +1,23 @@
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: jenkins/Dockerfile
+    ports:
+      - "${JENKINS_HOST_PORT:-8081}:8080"
+      - "${JENKINS_AGENT_PORT:-50000}:50000"
+    environment:
+      JENKINS_OPTS: "--httpPort=8080"
+      COLLECTING_METRICS_PERIOD_IN_SECONDS: "120"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    networks:
+      - devops
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:
+
+networks:
+  devops:
+    name: "${DEVOPS_NETWORK_NAME:-petclinic-devops}"

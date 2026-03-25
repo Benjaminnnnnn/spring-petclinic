@@ -1,0 +1,7 @@
+blueocean
+git
+htmlpublisher
+pipeline-stage-view
+prometheus
+sonar
+workflow-aggregator
