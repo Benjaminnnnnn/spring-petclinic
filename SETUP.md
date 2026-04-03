@@ -76,9 +76,9 @@ All services are accessible from your **host machine** (Windows) at the followin
 | Service | URL | Credentials |
 |---------|-----|-------------|
 | **Jenkins** | http://localhost:8081 | Get initial password: `docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword` |
-| **SonarQube** | http://localhost:9000 | Username: `admin`<br>Password: `admin` |
+| **SonarQube** | http://localhost:9000 | Username: `admin`<br>Password: `admin` on a fresh volume |
 | **Prometheus** | http://localhost:9090 | No authentication |
-| **Grafana** | http://localhost:3000 | Username: `admin`<br>Password: `admin` |
+| **Grafana** | http://localhost:3030 | Username: `admin`<br>Password: `admin` |
 | **OWASP ZAP** | http://localhost:8090 | API Key: `burp-api-key` |
 | **PostgreSQL** | localhost:5432 | Username: `sonar`<br>Password: `sonar`<br>Database: `sonarqube` |
 
@@ -90,7 +90,7 @@ All services are accessible from your **host machine** (Windows) at the followin
 | Jenkins Agent | 50000 | 50000 |
 | SonarQube | 9000 | 9000 |
 | Prometheus | 9090 | 9090 |
-| Grafana | 3000 | 3000 |
+| Grafana | 3000 | 3030 |
 | OWASP ZAP API | 8090 | 8090 |
 | OWASP ZAP Proxy | 8080 | 8080 |
 | PostgreSQL | 5432 | (internal only) |
@@ -107,7 +107,15 @@ docker compose -f docker-compose.devops.yml logs
 ```
 
 ### Port conflicts
-If you get port binding errors, make sure no other services are using ports 3000, 8080, 8081, 8090, 9000, or 9090 on your host machine.
+If you get port binding errors, make sure no other services are using ports 3030, 8080, 8081, 8090, 9000, or 9090 on your host machine.
+
+### SonarQube rejects `admin/admin`
+That usually means the `sonarqube-data` volume already exists and the password was changed during an earlier run. Reset the persisted SonarQube state and restart the stack:
+
+```bash
+docker compose -f docker-compose.devops.yml down -v
+./setup.sh
+```
 
 ### Reset everything
 ```bash

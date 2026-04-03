@@ -5,6 +5,8 @@
 
 set -e
 
+GRAFANA_HOST_PORT="${GRAFANA_HOST_PORT:-3030}"
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -110,10 +112,15 @@ echo "=========================================="
 echo ""
 echo "Access your services at:"
 echo "  Jenkins:    http://localhost:8081"
-echo "  SonarQube:  http://localhost:9000 (admin/admin)"
+echo "  SonarQube:  http://localhost:9000 (admin/admin on a fresh volume)"
 echo "  Prometheus: http://localhost:9090"
-echo "  Grafana:    http://localhost:3000 (admin/admin)"
+echo "  Grafana:    http://localhost:${GRAFANA_HOST_PORT} (admin/admin)"
 echo "  OWASP ZAP:  http://localhost:8090"
+echo ""
+echo "If SonarQube rejects admin/admin, reset persisted state with:"
+echo "  docker compose -f docker-compose.devops.yml down -v"
+echo "then rerun:"
+echo "  ./setup.sh"
 echo ""
 echo "Check status with:"
 echo "  docker compose -f docker-compose.devops.yml ps"

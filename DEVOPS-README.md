@@ -48,6 +48,19 @@ Optional if you want Jenkins to use a generated SonarQube token instead of `admi
 export SONARQUBE_TOKEN="<your-sonarqube-token>"
 ```
 
+To create the token in SonarQube:
+
+1. Start the stack and open `http://localhost:9000`.
+2. Sign in as `admin / admin` on a fresh volume.
+3. Open the user avatar in the top-right, then go to `My Account` → `Security`.
+4. Enter a token name such as `jenkins-token`, click `Generate`, and copy the token immediately.
+
+You can also generate it by API after login works:
+
+```bash
+curl -u admin:admin -X POST "http://localhost:9000/api/user_tokens/generate?name=jenkins-token"
+```
+
 ### 3. Start the Containerized Toolchain
 
 ```bash
@@ -60,16 +73,23 @@ This builds the custom Jenkins image, pulls the other images, and starts:
 - Jenkins at `http://localhost:8081`
 - SonarQube at `http://localhost:9000`
 - Prometheus at `http://localhost:9090`
-- Grafana at `http://localhost:3000`
+- Grafana at `http://localhost:3030`
 - OWASP ZAP API at `http://localhost:8090`
 
 ### 4. Log In to the Services
 
 - Jenkins: `admin / admin`
-- SonarQube: `admin / admin`
+- SonarQube: `admin / admin` on a fresh volume
 - Grafana: `admin / admin`
 
 After first SonarQube login, create a user token and export it as `SONARQUBE_TOKEN` for repeatable Jenkins scans.
+
+If SonarQube does not accept `admin / admin`, an old Docker volume is probably being reused. Reset the stack with:
+
+```bash
+docker compose -f docker-compose.devops.yml down -v
+./setup.sh
+```
 
 ### 5. Confirm Jenkins Auto-Configuration
 

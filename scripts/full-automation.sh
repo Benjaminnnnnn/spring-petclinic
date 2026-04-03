@@ -5,6 +5,8 @@
 
 set -e
 
+GRAFANA_HOST_PORT="${GRAFANA_HOST_PORT:-3030}"
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -158,7 +160,7 @@ wait_for_service() {
 wait_for_service "Jenkins" 8081
 wait_for_service "SonarQube" 9000
 wait_for_service "Prometheus" 9090
-wait_for_service "Grafana" 3000
+wait_for_service "Grafana" "$GRAFANA_HOST_PORT"
 wait_for_service "OWASP ZAP" 8090
 
 # Step 6: Configure SonarQube
@@ -274,6 +276,7 @@ print_step "Step 10: Creating Helper Scripts"
 # Check services script
 cat > check-services.sh << 'EOF'
 #!/bin/bash
+GRAFANA_HOST_PORT="${GRAFANA_HOST_PORT:-3030}"
 echo "DevOps Services Status"
 echo ""
 docker compose -f docker-compose.devops.yml ps
@@ -282,7 +285,7 @@ echo "Service URLs:"
 echo "  Jenkins:    http://localhost:8081"
 echo "  SonarQube:  http://localhost:9000"
 echo "  Prometheus: http://localhost:9090"
-echo "  Grafana:    http://localhost:3000"
+echo "  Grafana:    http://localhost:$GRAFANA_HOST_PORT"
 echo "  ZAP:        http://localhost:8090"
 EOF
 chmod +x check-services.sh
@@ -356,7 +359,7 @@ Jenkins
 SonarQube
   URL: http://localhost:9000
   Username: admin
-  Password: admin (CHANGE ON FIRST LOGIN!)
+  Password: admin (fresh volume only; change on first login)
   Token: $SONAR_TOKEN
 
 Prometheus
@@ -364,7 +367,7 @@ Prometheus
   No authentication required
 
 Grafana
-  URL: http://localhost:3000
+  URL: http://localhost:$GRAFANA_HOST_PORT
   Username: admin
   Password: admin
 
