@@ -9,6 +9,8 @@ pipeline {
         APP_TEST_PORT = '8082'
         DEPLOY_HOST = "${env.PRODUCTION_VM_HOST ?: ''}"
         DEPLOY_USER = "${env.PRODUCTION_VM_USER ?: 'deployer'}"
+        DEPLOY_SSH_PORT = "${env.PRODUCTION_VM_SSH_PORT ?: '22'}"
+        DEPLOY_APP_PORT = "${env.PRODUCTION_VM_APP_PORT ?: '8080'}"
     }
 
     options {
@@ -186,12 +188,12 @@ pipeline {
             steps {
                 writeFile file: 'ansible/inventory.ini', text: """
 [production]
-${DEPLOY_HOST} ansible_user=${DEPLOY_USER} ansible_python_interpreter=/usr/bin/python3
+${DEPLOY_HOST} ansible_user=${DEPLOY_USER} ansible_port=${DEPLOY_SSH_PORT} ansible_python_interpreter=/usr/bin/python3
 """
                 ansiblePlaybook(
                     playbook: 'ansible/deploy-playbook.yml',
                     inventory: 'ansible/inventory.ini',
-                    extras: "-e app_version=${BUILD_VERSION} -e app_name=${APP_NAME}",
+                    extras: "-e app_version=${BUILD_VERSION} -e app_name=${APP_NAME} -e app_port=${DEPLOY_APP_PORT}",
                     colorized: true
                 )
             }
@@ -205,7 +207,7 @@ ${DEPLOY_HOST} ansible_user=${DEPLOY_USER} ansible_python_interpreter=/usr/bin/p
             }
             steps {
                 sh '''
-                    DEPLOY_URL=$(printf 'http%s%s' '://' "${DEPLOY_HOST}:8080")
+                    DEPLOY_URL=$(printf 'http%s%s' '://' "${DEPLOY_HOST}:${DEPLOY_APP_PORT}")
                     for attempt in $(seq 1 30); do
                       if curl -fsS "${DEPLOY_URL}" | grep -q "Welcome"; then
                         exit 0

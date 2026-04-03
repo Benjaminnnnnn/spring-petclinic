@@ -118,18 +118,35 @@ At minimum you need:
 - Python 3 on the VM
 - port `8080` open to the machine running the monitoring stack
 
+For a minimal local production target, the repo now includes a root [`Vagrantfile`](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/Vagrantfile) that selects sensible defaults for both x86_64 and ARM hosts:
+
+```bash
+vagrant up
+```
+
+Use the Vagrant-backed Jenkins settings:
+
+- `PRODUCTION_VM_HOST=host.docker.internal`
+- `PRODUCTION_VM_USER=deployer`
+- `PRODUCTION_VM_SSH_PORT=2222`
+- `PRODUCTION_VM_APP_PORT=8080`
+
 ### 7. Configure Deployment Variables in Jenkins
 
 In the Jenkins job or global environment, define:
 
 - `PRODUCTION_VM_HOST`
 - `PRODUCTION_VM_USER`
+- `PRODUCTION_VM_SSH_PORT` if SSH is forwarded through a non-default port such as Vagrant `2222`
+- `PRODUCTION_VM_APP_PORT` if the deployed app is exposed on a non-default host port
 
 The pipeline skips deployment stages when `PRODUCTION_VM_HOST` is blank, so set it before your final graded run.
 
 ### 8. Point Prometheus at the Deployed VM
 
-Edit [prometheus/targets/petclinic.json](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/prometheus/targets/petclinic.json) and replace `host.docker.internal:8080` with `<vm-ip>:8080`, then reload Prometheus:
+For the included Vagrant VM, you can keep [prometheus/targets/petclinic.json](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/prometheus/targets/petclinic.json) pointed at `host.docker.internal:8080`.
+
+For a separate VM, replace `host.docker.internal:8080` with `<vm-ip>:8080`, then reload Prometheus:
 
 ```bash
 docker compose -f docker-compose.devops.yml restart prometheus
