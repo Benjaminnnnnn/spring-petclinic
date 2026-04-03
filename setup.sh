@@ -13,7 +13,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 echo -e "${CYAN}========================================${NC}"
-echo -e "${CYAN}Pulling Docker Images for DevSecOps${NC}"
+echo -e "${CYAN}Pulling Docker Images for DevOps${NC}"
 echo -e "${CYAN}========================================${NC}"
 echo ""
 
@@ -87,21 +87,21 @@ echo -e "${CYAN}Next Steps:${NC}"
 echo -e "${CYAN}========================================${NC}"
 echo ""
 echo -e "${GREEN}All images downloaded! Now run:${NC}"
-echo -e "${NC}  docker compose -f docker-compose-devsecops.yml up -d${NC}"
+echo -e "${NC}  docker compose -f docker-compose.devops.yml up -d${NC}"
 echo ""
-echo -e "${GREEN}Or use the setup script:${NC}"
-echo -e "${NC}  ./setup-devsecops.sh${NC}"
+echo -e "${GREEN}Or rerun this setup helper:${NC}"
+echo -e "${NC}  ./setup.sh${NC}"
 echo ""
 
 
 echo "=========================================="
-echo "Starting DevSecOps Services"
+echo "Starting DevOps Services"
 echo "=========================================="
 echo ""
 
 # Start all services
 echo "Starting Docker Compose services..."
-docker compose -f docker-compose-devsecops.yml up -d
+docker compose -f docker-compose.devops.yml up -d
 
 echo ""
 echo "=========================================="
@@ -116,9 +116,8 @@ echo "  Grafana:    http://localhost:3000 (admin/admin)"
 echo "  OWASP ZAP:  http://localhost:8090"
 echo ""
 echo "Check status with:"
-echo "  docker compose -f docker-compose-devsecops.yml ps"
+echo "  docker compose -f docker-compose.devops.yml ps"
 echo ""
 echo "View logs with:"
-echo "  docker compose -f docker-compose-devsecops.yml logs -f [service-name]"
+echo "  docker compose -f docker-compose.devops.yml logs -f [service-name]"
 echo ""
-

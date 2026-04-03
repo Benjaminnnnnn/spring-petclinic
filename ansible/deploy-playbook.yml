@@ -8,6 +8,7 @@
     app_port: 8080
     app_user: petclinic
     app_home: /opt/petclinic
+    app_service_name: petclinic
     
   tasks:
     - name: Update apt cache
@@ -20,9 +21,23 @@
       package:
         name:
           - openjdk-17-jdk
-          - docker.io
           - curl
         state: present
+
+    - name: Locate packaged application JAR in Jenkins workspace
+      become: no
+      delegate_to: localhost
+      find:
+        paths: "{{ playbook_dir }}/../target"
+        patterns: "*.jar"
+        excludes:
+          - "original-*.jar"
+      register: packaged_jars
+
+    - name: Fail when the packaged application JAR is missing
+      fail:
+        msg: "No packaged Spring PetClinic JAR was found under target/. Run the Jenkins build stages first."
+      when: packaged_jars.matched == 0
         
     - name: Create application user
       user:
@@ -46,55 +61,13 @@
         
     - name: Stop existing application
       systemd:
-        name: petclinic
+        name: "{{ app_service_name }}"
         state: stopped
       ignore_errors: yes
-      
-    - name: Pull Docker image from Jenkins host
-      docker_image:
-        name: "{{ app_name }}:{{ app_version }}"
-        source: pull
-      ignore_errors: yes
-      
-    - name: Export Docker image to tar (if Docker registry not available)
-      delegate_to: localhost
-      shell: |
-        docker save {{ app_name }}:{{ app_version }} -o /tmp/{{ app_name }}-{{ app_version }}.tar
-      when: false  # Enable if using tar transfer method
-      
-    - name: Copy Docker image tar to production VM
-      copy:
-        src: "/tmp/{{ app_name }}-{{ app_version }}.tar"
-        dest: "{{ app_home }}/{{ app_name }}-{{ app_version }}.tar"
-      when: false  # Enable if using tar transfer method
-      
-    - name: Load Docker image from tar
-      shell: |
-        docker load -i {{ app_home }}/{{ app_name }}-{{ app_version }}.tar
-      when: false  # Enable if using tar transfer method
-      
-    - name: Extract JAR from Docker image
-      shell: |
-        # Create temporary container
-        CONTAINER_ID=$(docker create {{ app_name }}:{{ app_version }})
-        
-        # Copy JAR file from container
-        docker cp $CONTAINER_ID:/workspace/BOOT-INF/classes/. {{ app_home }}/classes/ || true
-        docker cp $CONTAINER_ID:/workspace/BOOT-INF/lib/. {{ app_home }}/lib/ || true
-        docker cp $CONTAINER_ID:/app.jar {{ app_home }}/{{ app_name }}.jar || true
-        
-        # Remove temporary container
-        docker rm $CONTAINER_ID
-        
-        # Fallback: if JAR extraction failed, try to find it in target
-        if [ ! -f {{ app_home }}/{{ app_name }}.jar ]; then
-          echo "JAR not found in Docker image, will use direct transfer"
-        fi
-      ignore_errors: yes
-      
+
     - name: Copy JAR file directly from Jenkins workspace (fallback)
       copy:
-        src: "{{ playbook_dir }}/../target/spring-petclinic-4.0.0-SNAPSHOT.jar"
+        src: "{{ (packaged_jars.files | map(attribute='path') | list | first) }}"
         dest: "{{ app_home }}/{{ app_name }}.jar"
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
@@ -122,7 +95,7 @@
           
     - name: Create systemd service file
       copy:
-        dest: /etc/systemd/system/petclinic.service
+        dest: "/etc/systemd/system/{{ app_service_name }}.service"
         mode: '0644'
         content: |
           [Unit]
@@ -157,7 +130,7 @@
         
     - name: Enable and start petclinic service
       systemd:
-        name: petclinic
+        name: "{{ app_service_name }}"
         enabled: yes
         state: started
         

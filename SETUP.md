@@ -1,6 +1,6 @@
 # DevOps Environment Setup
 
-Simple guide to run the DevOps pipeline in your dev container.
+Quick-start guide to run the DevOps stack locally. For the full assignment workflow, see [DEVOPS-README.md](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/DEVOPS-README.md).
 
 ## Prerequisites
 
@@ -22,6 +22,7 @@ chmod 755 setup.sh stop-services.sh
 Inside your dev container terminal, run:
 
 ```bash
+export PIPELINE_REPO_URL="https://github.com/Benjaminnnnnn/spring-petclinic.git"
 ./setup.sh
 ```
 
@@ -43,29 +44,29 @@ To stop all services:
 Or manually:
 
 ```bash
-docker compose -f docker-compose-devsecops.yml down
+docker compose -f docker-compose.devops.yml down
 ```
 
 To stop and remove volumes (clean slate):
 
 ```bash
-docker compose -f docker-compose-devsecops.yml down -v
+docker compose -f docker-compose.devops.yml down -v
 ```
 
 ### 4. Check Service Status
 
 ```bash
-docker compose -f docker-compose-devsecops.yml ps
+docker compose -f docker-compose.devops.yml ps
 ```
 
 ### 5. View Logs
 
 ```bash
 # All services
-docker compose -f docker-compose-devsecops.yml logs -f
+docker compose -f docker-compose.devops.yml logs -f
 
 # Specific service
-docker compose -f docker-compose-devsecops.yml logs -f jenkins
+docker compose -f docker-compose.devops.yml logs -f jenkins
 ```
 
 ## Service Access
@@ -102,7 +103,7 @@ All services are accessible from your **host machine** (Windows) at the followin
 docker ps
 
 # Check logs for errors
-docker compose -f docker-compose-devsecops.yml logs
+docker compose -f docker-compose.devops.yml logs
 ```
 
 ### Port conflicts
@@ -111,7 +112,7 @@ If you get port binding errors, make sure no other services are using ports 3000
 ### Reset everything
 ```bash
 # Stop and remove all containers, networks, and volumes
-docker compose -f docker-compose-devsecops.yml down -v
+docker compose -f docker-compose.devops.yml down -v
 
 # Remove all images (optional)
 docker rmi jenkins/jenkins:lts-jdk17 sonarqube:lts-community zaproxy/zap-stable prom/prometheus:latest grafana/grafana:latest postgres:15-alpine

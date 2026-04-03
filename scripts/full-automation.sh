@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Full Automation Script for DevSecOps Pipeline
+# Full Automation Script for DevOps Pipeline
 # This script provides complete automation for bonus points
 
 set -e
@@ -20,14 +20,14 @@ print_step() { echo -e "\n${CYAN}=== $1 ===${NC}"; }
 cat << "EOF"
 ╔════════════════════════════════════════════════════════════╗
 ║                                                            ║
-║     DevSecOps Pipeline - Full Automation Script           ║
+║     DevOps Pipeline - Full Automation Script              ║
 ║     Spring PetClinic Project                              ║
 ║                                                            ║
 ╚════════════════════════════════════════════════════════════╝
 EOF
 
 # Parse arguments
-GITHUB_USERNAME=""
+GITHUB_USERNAME="Benjaminnnnnn"
 GITHUB_REPO="spring-petclinic"
 PRODUCTION_VM_IP=""
 SKIP_VM_SETUP=false
@@ -102,10 +102,10 @@ if [ "$CLEAN_INSTALL" = true ]; then
     print_step "Step 2: Cleaning Previous Installation"
     
     print_info "Stopping all services..."
-    docker compose -f docker-compose-devsecops.yml down -v 2>/dev/null || true
+    docker compose -f docker-compose.devops.yml down -v 2>/dev/null || true
     
     print_info "Removing Docker network..."
-    docker network rm devsecops-network 2>/dev/null || true
+    docker network rm devops-network 2>/dev/null || true
     
     print_success "Clean installation prepared"
 else
@@ -115,17 +115,17 @@ fi
 # Step 3: Create Docker Network
 print_step "Step 3: Creating Docker Network"
 
-if docker network create devsecops-network 2>/dev/null; then
+if docker network create devops-network 2>/dev/null; then
     print_success "Docker network created"
 else
     print_info "Network already exists"
 fi
 
 # Step 4: Start All Services
-print_step "Step 4: Starting DevSecOps Services"
+print_step "Step 4: Starting DevOps Services"
 
 print_info "Starting containers (this may take 5-10 minutes)..."
-docker compose -f docker-compose-devsecops.yml up -d
+docker compose -f docker-compose.devops.yml up -d
 
 sleep 10
 
@@ -232,7 +232,7 @@ mkdir -p jenkins-config/jobs
 cat > jenkins-config/jobs/spring-petclinic-pipeline-config.xml << EOF
 <?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job@2.40">
-  <description>DevSecOps Pipeline for Spring PetClinic</description>
+  <description>DevOps Pipeline for Spring PetClinic</description>
   <keepDependencies>false</keepDependencies>
   <properties>
     <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
@@ -274,9 +274,9 @@ print_step "Step 10: Creating Helper Scripts"
 # Check services script
 cat > check-services.sh << 'EOF'
 #!/bin/bash
-echo "DevSecOps Services Status"
+echo "DevOps Services Status"
 echo ""
-docker compose -f docker-compose-devsecops.yml ps
+docker compose -f docker-compose.devops.yml ps
 echo ""
 echo "Service URLs:"
 echo "  Jenkins:    http://localhost:8081"
@@ -290,8 +290,8 @@ chmod +x check-services.sh
 # Stop services script
 cat > stop-services.sh << 'EOF'
 #!/bin/bash
-echo "Stopping DevSecOps services..."
-docker compose -f docker-compose-devsecops.yml down
+echo "Stopping DevOps services..."
+docker compose -f docker-compose.devops.yml down
 echo "Services stopped"
 EOF
 chmod +x stop-services.sh
@@ -299,8 +299,8 @@ chmod +x stop-services.sh
 # Restart services script
 cat > restart-services.sh << 'EOF'
 #!/bin/bash
-echo "Restarting DevSecOps services..."
-docker compose -f docker-compose-devsecops.yml restart
+echo "Restarting DevOps services..."
+docker compose -f docker-compose.devops.yml restart
 echo "Services restarted"
 EOF
 chmod +x restart-services.sh
@@ -310,9 +310,9 @@ cat > view-logs.sh << 'EOF'
 #!/bin/bash
 SERVICE=${1:-""}
 if [ -n "$SERVICE" ]; then
-    docker compose -f docker-compose-devsecops.yml logs -f $SERVICE
+    docker compose -f docker-compose.devops.yml logs -f $SERVICE
 else
-    docker compose -f docker-compose-devsecops.yml logs -f
+    docker compose -f docker-compose.devops.yml logs -f
 fi
 EOF
 chmod +x view-logs.sh
@@ -337,7 +337,7 @@ fi
 cat > SETUP-SUMMARY.txt << EOF
 ╔════════════════════════════════════════════════════════════╗
 ║                                                            ║
-║     DevSecOps Pipeline - Setup Complete!                  ║
+║     DevOps Pipeline - Setup Complete!                     ║
 ║                                                            ║
 ╚════════════════════════════════════════════════════════════╝
 
@@ -370,7 +370,7 @@ Grafana
 
 OWASP ZAP
   URL: http://localhost:8090
-  API Key: devsecops-zap-key
+  API Key: burp-api-key
 
 $VM_INFO
 
@@ -430,8 +430,8 @@ HELPER SCRIPTS
 DOCUMENTATION
 ═══════════════════════════════════════════════════════════
 
-DEVSECOPS-README.md     - Main documentation
-SETUP-GUIDE.md          - Detailed setup instructions
+DEVOPS-README.md        - Main documentation
+SETUP.md                - Quick local setup instructions
 VM-SETUP-GUIDE.md       - Production VM setup
 SCREENSHOTS-GUIDE.md    - Screenshot requirements
 
@@ -440,14 +440,14 @@ TROUBLESHOOTING
 ═══════════════════════════════════════════════════════════
 
 Service not starting:
-  docker compose -f docker-compose-devsecops.yml logs <service>
+  docker compose -f docker-compose.devops.yml logs <service>
 
 Restart specific service:
-  docker compose -f docker-compose-devsecops.yml restart <service>
+  docker compose -f docker-compose.devops.yml restart <service>
 
 Clean restart:
-  docker compose -f docker-compose-devsecops.yml down -v
-  ./setup-devsecops.sh
+  docker compose -f docker-compose.devops.yml down -v
+  ./setup.sh
 
 ═══════════════════════════════════════════════════════════
 
@@ -467,11 +467,11 @@ print_step "Step 12: Final Verification"
 
 print_info "Verifying all services are running..."
 
-EXPECTED_SERVICES=("jenkins" "sonarqube" "postgresql" "prometheus" "grafana" "zap")
+EXPECTED_SERVICES=("jenkins" "sonarqube" "postgresql" "prometheus" "grafana" "burpsuite")
 ALL_RUNNING=true
 
 for service in "${EXPECTED_SERVICES[@]}"; do
-    if docker compose -f docker-compose-devsecops.yml ps | grep -q "$service.*Up"; then
+    if docker compose -f docker-compose.devops.yml ps | grep -q "$service.*Up"; then
         print_success "$service is running"
     else
         print_error "$service is not running"

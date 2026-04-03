@@ -1,0 +1,16 @@
+ansible
+blueocean
+configuration-as-code
+credentials-binding
+docker-workflow
+git
+htmlpublisher
+jacoco
+job-dsl
+pipeline-stage-view
+pipeline-utility-steps
+prometheus
+sonar
+ssh-agent
+workflow-aggregator
+ws-cleanup

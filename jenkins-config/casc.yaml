@@ -1,24 +1,18 @@
-# Jenkins Configuration as Code (JCasC)
-# This file automates Jenkins configuration
-
 jenkins:
-  systemMessage: "DevSecOps Pipeline - Spring PetClinic"
+  systemMessage: "DevOps Pipeline - Spring PetClinic"
   numExecutors: 2
   mode: NORMAL
-  
+
   securityRealm:
     local:
       allowsSignup: false
       users:
         - id: "admin"
           password: "admin"
-          
+
   authorizationStrategy:
     loggedInUsersCanDoAnything:
       allowAnonymousRead: false
-
-  remotingSecurity:
-    enabled: true
 
 credentials:
   system:
@@ -28,52 +22,43 @@ credentials:
               scope: GLOBAL
               id: "sonarqube-token"
               secret: "${SONARQUBE_TOKEN}"
-              description: "SonarQube Authentication Token"
-
-tool:
-  git:
-    installations:
-      - name: "Default"
-        home: "git"
-        
-  maven:
-    installations:
-      - name: "Maven"
-        properties:
-          - installSource:
-              installers:
-                - maven:
-                    id: "3.9.6"
-                    
-  jdk:
-    installations:
-      - name: "JDK17"
-        properties:
-          - installSource:
-              installers:
-                - adoptOpenJdkInstaller:
-                    id: "jdk-17.0.9+9"
+              description: "SonarQube authentication token"
 
 unclassified:
   location:
     url: "http://localhost:8081/"
-    
+
   sonarGlobalConfiguration:
+    buildWrapperEnabled: true
     installations:
       - name: "SonarQube"
         serverUrl: "http://sonarqube:9000"
         credentialsId: "sonarqube-token"
-        
+
   prometheusConfiguration:
     path: "prometheus"
     defaultNamespace: "jenkins"
-    collectingMetricsPeriodInSeconds: 120
-    
-  globalLibraries:
-    libraries:
-      - name: "pipeline-library"
-        retriever:
-          modernSCM:
-            scm:
-              git:
-                remote: "https://github.com/jenkinsci/pipeline-examples.git"
+    collectingMetricsPeriodInSeconds: 30
+
+jobs:
+  - script: >
+      pipelineJob('spring-petclinic-pipeline') {
+        description('DevOps pipeline for Spring PetClinic')
+        triggers {
+          scm('H/5 * * * *')
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url(System.getenv('PIPELINE_REPO_URL'))
+                }
+                branch('*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(true)
+          }
+        }
+      }
