@@ -10,7 +10,6 @@
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-
   "customizations": {
     "vscode": {
       "settings": {},
@@ -21,5 +20,12 @@
       ]
     }
   },
-  "remoteUser": "vscode"
+  "remoteUser": "vscode",
+  "forwardPorts": [
+    3000,
+    8081,
+    8090,
+    9000,
+    9090
+  ]
 }
