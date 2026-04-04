@@ -107,7 +107,7 @@
           User={{ app_user }}
           Group={{ app_user }}
           WorkingDirectory={{ app_home }}
-          ExecStart=/usr/bin/java -jar {{ app_home }}/{{ app_name }}.jar --spring.config.location={{ app_home }}/config/application.properties
+          ExecStart=/usr/bin/java -jar {{ app_home }}/{{ app_name }}.jar --spring.config.additional-location={{ app_home }}/config/application.properties
           Restart=always
           RestartSec=10
           StandardOutput=journal
