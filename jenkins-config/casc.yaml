@@ -1,6 +1,6 @@
 jenkins:
   systemMessage: "DevOps Pipeline - Spring PetClinic"
-  numExecutors: 2
+  numExecutors: 1
   mode: NORMAL
   globalNodeProperties:
     - envVars:

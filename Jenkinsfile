@@ -55,7 +55,7 @@ pipeline {
 
         stage('Unit Tests') {
             steps {
-                sh './mvnw -B test jacoco:report'
+                sh './mvnw -B test jacoco:report -Dspring.docker.compose.host=host.docker.internal'
             }
             post {
                 always {
