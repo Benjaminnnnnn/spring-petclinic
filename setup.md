@@ -23,6 +23,8 @@ The local DevOps stack starts these services:
 - OWASP ZAP in the `burpsuite` service
 - PostgreSQL for SonarQube
 
+For the security-analysis requirement in [instruction.md](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/instruction.md), this repo uses OWASP ZAP in the `burpsuite` container slot because it is easier to automate headlessly in Docker than Burp Suite Community Edition.
+
 The production application itself is **not** deployed into those containers. Jenkins deploys the Spring PetClinic JAR to a separate Linux VM using Ansible.
 
 ## 2. Prerequisites
@@ -144,7 +146,6 @@ All remaining steps in this guide should be run inside that dev container termin
 Inside the dev container:
 
 ```bash
-chmod 755 setup.sh stop-services.sh
 ./setup.sh
 ```
 
@@ -158,6 +159,8 @@ If you want Jenkins to use a different branch, run:
 ```bash
 ./setup.sh --branch some-branch
 ```
+
+Running `./setup.sh` again without `--branch` switches Jenkins back to `main`.
 
 ### What `./setup.sh` Does
 
