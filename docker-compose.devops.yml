@@ -84,6 +84,7 @@ services:
       - jenkins-data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
       - ./jenkins-config:/var/jenkins_config
+      - ./.jenkins-ssh:/root/.ssh:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:

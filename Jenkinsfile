@@ -167,7 +167,7 @@ pipeline {
             steps {
                 writeFile file: 'ansible/inventory.ini', text: """
 [production]
-${DEPLOY_HOST} ansible_user=${DEPLOY_USER} ansible_port=${DEPLOY_SSH_PORT} ansible_python_interpreter=/usr/bin/python3
+${DEPLOY_HOST} ansible_user=${DEPLOY_USER} ansible_port=${DEPLOY_SSH_PORT} ansible_python_interpreter=/usr/bin/python3 ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 """
                 ansiblePlaybook(
                     playbook: 'ansible/deploy-playbook.yml',

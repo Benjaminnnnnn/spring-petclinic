@@ -68,13 +68,119 @@ resolve_env_value() {
     fi
 }
 
+detect_vagrant_ssh_value() {
+    local key="$1"
+    local ssh_config
+
+    if [ ! -f "Vagrantfile" ] || ! command -v vagrant >/dev/null 2>&1; then
+        return 1
+    fi
+
+    ssh_config="$(vagrant ssh-config 2>/dev/null || true)"
+    if [ -z "$ssh_config" ]; then
+        return 1
+    fi
+
+    awk -v wanted_key="$key" '$1 == wanted_key { print $2; exit }' <<< "$ssh_config"
+}
+
+detect_vagrant_forwarded_port() {
+    local guest_port="$1"
+    local forwarded_port
+
+    if [ ! -f "Vagrantfile" ] || ! command -v vagrant >/dev/null 2>&1; then
+        return 1
+    fi
+
+    forwarded_port="$(
+        vagrant port 2>/dev/null | awk -v guest_port="$guest_port" '
+            $1 == guest_port && $2 == "(guest)" && $4 == "(host)" { print $3; exit }
+        '
+    )"
+
+    if [ -n "$forwarded_port" ]; then
+        printf '%s' "$forwarded_port"
+        return 0
+    fi
+
+    return 1
+}
+
+detect_vagrant_vm_host() {
+    local detected_host
+
+    detected_host="$(detect_vagrant_ssh_value "HostName" 2>/dev/null || true)"
+    if [ -n "$detected_host" ]; then
+        printf '%s' "$detected_host"
+        return 0
+    fi
+
+    return 1
+}
+
+detect_vagrant_vm_ssh_port() {
+    local detected_port
+
+    detected_port="$(detect_vagrant_ssh_value "Port" 2>/dev/null || true)"
+    if [ -n "$detected_port" ]; then
+        printf '%s' "$detected_port"
+        return 0
+    fi
+
+    return 1
+}
+
+detect_vagrant_vm_app_port() {
+    local detected_host
+    local forwarded_port
+
+    detected_host="$(detect_vagrant_vm_host 2>/dev/null || true)"
+    forwarded_port="$(detect_vagrant_forwarded_port "8080" 2>/dev/null || true)"
+
+    if [ -n "$forwarded_port" ]; then
+        printf '%s' "$forwarded_port"
+        return 0
+    fi
+
+    if [ -n "$detected_host" ]; then
+        printf '%s' "8080"
+        return 0
+    fi
+
+    return 1
+}
+
+resolve_deploy_target_value() {
+    local key="$1"
+    local fallback_default="$2"
+    local detected_value=""
+
+    case "$key" in
+        PRODUCTION_VM_HOST)
+            detected_value="$(detect_vagrant_vm_host 2>/dev/null || true)"
+            ;;
+        PRODUCTION_VM_SSH_PORT)
+            detected_value="$(detect_vagrant_vm_ssh_port 2>/dev/null || true)"
+            ;;
+        PRODUCTION_VM_APP_PORT)
+            detected_value="$(detect_vagrant_vm_app_port 2>/dev/null || true)"
+            ;;
+    esac
+
+    if [ -n "$detected_value" ]; then
+        resolve_env_value "$key" "$detected_value"
+    else
+        resolve_env_value "$key" "$fallback_default"
+    fi
+}
+
 GRAFANA_HOST_PORT="$(resolve_env_value "GRAFANA_HOST_PORT" "3030")"
 PIPELINE_REPO_URL="$(resolve_env_value "PIPELINE_REPO_URL" "https://github.com/Benjaminnnnnn/spring-petclinic.git")"
 PIPELINE_REPO_BRANCH="$(resolve_env_value "PIPELINE_REPO_BRANCH" "main")"
-PRODUCTION_VM_HOST="$(resolve_env_value "PRODUCTION_VM_HOST" "host.docker.internal")"
+PRODUCTION_VM_HOST="$(resolve_deploy_target_value "PRODUCTION_VM_HOST" "host.docker.internal")"
 PRODUCTION_VM_USER="$(resolve_env_value "PRODUCTION_VM_USER" "deployer")"
-PRODUCTION_VM_SSH_PORT="$(resolve_env_value "PRODUCTION_VM_SSH_PORT" "2222")"
-PRODUCTION_VM_APP_PORT="$(resolve_env_value "PRODUCTION_VM_APP_PORT" "8080")"
+PRODUCTION_VM_SSH_PORT="$(resolve_deploy_target_value "PRODUCTION_VM_SSH_PORT" "2222")"
+PRODUCTION_VM_APP_PORT="$(resolve_deploy_target_value "PRODUCTION_VM_APP_PORT" "8080")"
 SONARQUBE_TOKEN="$(resolve_env_value "SONARQUBE_TOKEN" "admin")"
 
 upsert_env_value "GRAFANA_HOST_PORT" "$GRAFANA_HOST_PORT"

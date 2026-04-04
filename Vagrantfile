@@ -50,12 +50,18 @@ Vagrant.configure("2") do |config|
   # through forwarded ports on the host, and some VMware setups on macOS fail
   # while creating additional vmnet devices for a private network.
   config.vm.network "private_network", ip: vm_private_ip if enable_private_network
-  config.vm.network "forwarded_port", guest: 22, host: host_ssh_port, id: "ssh", auto_correct: true
-  config.vm.network "forwarded_port", guest: 8080, host: host_app_port, auto_correct: true
+  config.vm.network "forwarded_port", guest: 22, host: host_ssh_port, id: "ssh", auto_correct: true, host_ip: "0.0.0.0"
+  config.vm.network "forwarded_port", guest: 8080, host: host_app_port, auto_correct: true, host_ip: "0.0.0.0"
 
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
   config.vm.provision "shell",
     path: "vagrant/bootstrap.sh",
     privileged: true
+
+  config.trigger.after :up, :reload, :provision do |trigger|
+    trigger.name = "Export Deployment Env"
+    trigger.info = "Writing Vagrant deployment target to .env for Jenkins setup"
+    trigger.run = { inline: "bash scripts/export-vagrant-env.sh" }
+  end
 end
