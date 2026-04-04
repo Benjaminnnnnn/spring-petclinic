@@ -79,7 +79,8 @@ pipeline {
                         ./mvnw -B sonar:sonar \
                             -Dsonar.projectKey=${APP_NAME} \
                             -Dsonar.projectName=${APP_NAME} \
-                            -Dsonar.host.url=${SONAR_HOST_URL}
+                            -Dsonar.host.url=${SONAR_HOST_URL} \
+                            -Dsonar.login=${SONAR_AUTH_TOKEN}
                     '''
                 }
             }
