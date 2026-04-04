@@ -98,6 +98,8 @@ export COMPOSE_HTTP_TIMEOUT=600
 # Define images
 declare -a images=(
     "postgres:15-alpine|PostgreSQL|Small"
+    "postgres:18.3|PostgreSQL Test DB|Large"
+    "mysql:9.6|MySQL Test DB|Large"
     "prom/prometheus:latest|Prometheus|Medium"
     "grafana/grafana:latest|Grafana|Medium"
     "jenkins/jenkins:lts-jdk17|Jenkins|Large"

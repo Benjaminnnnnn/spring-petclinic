@@ -9,6 +9,8 @@ SONAR_ADMIN_PASSWORD="${SONAR_ADMIN_PASSWORD:-admin}"
 SONAR_PROJECT_KEY="${SONAR_PROJECT_KEY:-spring-petclinic}"
 SONAR_PROJECT_NAME="${SONAR_PROJECT_NAME:-spring-petclinic}"
 TOKEN_PREFIX="${SONAR_TOKEN_PREFIX:-jenkins-token}"
+SONAR_WEBHOOK_NAME="${SONAR_WEBHOOK_NAME:-jenkins-quality-gate}"
+JENKINS_WEBHOOK_URL="${JENKINS_WEBHOOK_URL:-http://jenkins:8080/sonarqube-webhook/}"
 
 read_env_value() {
     local key="$1"
@@ -84,6 +86,24 @@ create_project() {
         --data-urlencode "project=${SONAR_PROJECT_KEY}" >/dev/null 2>&1 || true
 }
 
+ensure_webhook() {
+    local webhooks
+
+    webhooks="$(
+        curl -fsS -u "${SONAR_ADMIN_USER}:${SONAR_ADMIN_PASSWORD}" \
+            "$SONAR_HOST/api/webhooks/list" 2>/dev/null || true
+    )"
+
+    if printf '%s' "$webhooks" | grep -Fq "\"name\":\"${SONAR_WEBHOOK_NAME}\""; then
+        return 0
+    fi
+
+    curl -fsS -u "${SONAR_ADMIN_USER}:${SONAR_ADMIN_PASSWORD}" \
+        -X POST "$SONAR_HOST/api/webhooks/create" \
+        --data-urlencode "name=${SONAR_WEBHOOK_NAME}" \
+        --data-urlencode "url=${JENKINS_WEBHOOK_URL}" >/dev/null
+}
+
 main() {
     local existing_token
     local token
@@ -96,6 +116,7 @@ main() {
     existing_token="$(read_env_value "SONARQUBE_TOKEN" 2>/dev/null || true)"
     if [ -n "$existing_token" ] && [ "$existing_token" != "admin" ]; then
         create_project
+        ensure_webhook
         printf '%s\n' "$existing_token"
         exit 0
     fi
@@ -108,6 +129,7 @@ main() {
 
     upsert_env_value "SONARQUBE_TOKEN" "$token"
     create_project
+    ensure_webhook
     printf '%s\n' "$token"
 }
 
