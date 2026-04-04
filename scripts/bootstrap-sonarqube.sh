@@ -66,6 +66,22 @@ wait_for_sonarqube() {
     return 1
 }
 
+token_is_valid() {
+    local token="$1"
+    local response
+
+    if [ -z "$token" ]; then
+        return 1
+    fi
+
+    response="$(
+        curl -fsS -u "${token}:" \
+            "$SONAR_HOST/api/authentication/validate" 2>/dev/null || true
+    )"
+
+    printf '%s' "$response" | grep -q '"valid":true'
+}
+
 generate_token() {
     local token_name="${TOKEN_PREFIX}-$(date +%s)"
     local response
@@ -115,10 +131,12 @@ main() {
 
     existing_token="$(read_env_value "SONARQUBE_TOKEN" 2>/dev/null || true)"
     if [ -n "$existing_token" ] && [ "$existing_token" != "admin" ]; then
-        create_project
-        ensure_webhook
-        printf '%s\n' "$existing_token"
-        exit 0
+        if token_is_valid "$existing_token"; then
+            create_project
+            ensure_webhook
+            printf '%s\n' "$existing_token"
+            exit 0
+        fi
     fi
 
     token="$(generate_token)"

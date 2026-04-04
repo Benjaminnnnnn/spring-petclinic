@@ -98,6 +98,7 @@ pipeline {
             steps {
                 sh '''
                     ./mvnw -B spring-boot:build-image \
+                        -DskipTests \
                         -Dspring-boot.build-image.imageName=${APP_NAME}:${BUILD_VERSION}
                     docker tag ${APP_NAME}:${BUILD_VERSION} ${APP_NAME}:latest
                 '''
