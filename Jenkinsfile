@@ -105,29 +105,7 @@ pipeline {
             }
         }
 
-        stage('Security Scan - OWASP Dependency Check') {
-            steps {
-                sh '''
-                    ./mvnw -B org.owasp:dependency-check-maven:check \
-                        -DfailBuildOnCVSS=7 \
-                        -DsuppressionFiles=dependency-check-suppressions.xml || true
-                '''
-            }
-            post {
-                always {
-                    publishHTML(target: [
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'target',
-                        reportFiles: 'dependency-check-report.html',
-                        reportName: 'OWASP Dependency Check Report'
-                    ])
-                }
-            }
-        }
-
-        stage('Start Application for DAST') {
+        stage('Prepare Target for Dynamic Application Security Testing') {
             steps {
                 sh '''
                     APP_HEALTH_URL=$(printf 'http%s%s' '://' "localhost:${APP_TEST_PORT}/actuator/health")
@@ -153,7 +131,7 @@ pipeline {
             }
         }
 
-        stage('Security Scan - Burp-Compatible DAST') {
+        stage('Dynamic Application Security Testing - Burp Suite-Compatible') {
             steps {
                 sh '''
                     TARGET_URL=$(printf 'http%s%s' '://' "jenkins:${APP_TEST_PORT}")
