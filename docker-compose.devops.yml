@@ -72,6 +72,11 @@ services:
       - CASC_JENKINS_CONFIG=/var/jenkins_config/casc.yaml
       - SONARQUBE_TOKEN=${SONARQUBE_TOKEN:-admin}
       - PIPELINE_REPO_URL=${PIPELINE_REPO_URL:-https://github.com/Benjaminnnnnn/spring-petclinic.git}
+      - PIPELINE_REPO_BRANCH=${PIPELINE_REPO_BRANCH:-main}
+      - PRODUCTION_VM_HOST=${PRODUCTION_VM_HOST:-host.docker.internal}
+      - PRODUCTION_VM_USER=${PRODUCTION_VM_USER:-deployer}
+      - PRODUCTION_VM_SSH_PORT=${PRODUCTION_VM_SSH_PORT:-2222}
+      - PRODUCTION_VM_APP_PORT=${PRODUCTION_VM_APP_PORT:-8080}
     ports:
       - "8081:8080"
       - "50000:50000"

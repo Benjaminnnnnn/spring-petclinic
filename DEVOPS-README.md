@@ -133,14 +133,25 @@ Use the Vagrant-backed Jenkins settings:
 
 ### 7. Configure Deployment Variables in Jenkins
 
-In the Jenkins job or global environment, define:
+These values are now injected into Jenkins automatically by Docker Compose and JCasC.
 
-- `PRODUCTION_VM_HOST`
-- `PRODUCTION_VM_USER`
-- `PRODUCTION_VM_SSH_PORT` if SSH is forwarded through a non-default port such as Vagrant `2222`
-- `PRODUCTION_VM_APP_PORT` if the deployed app is exposed on a non-default host port
+For the default Vagrant VM, no manual Jenkins UI setup is required.
 
-The pipeline skips deployment stages when `PRODUCTION_VM_HOST` is blank, so set it before your final graded run.
+If you need different values, export them before starting the stack:
+
+```bash
+export PRODUCTION_VM_HOST=host.docker.internal
+export PRODUCTION_VM_USER=deployer
+export PRODUCTION_VM_SSH_PORT=2222
+export PRODUCTION_VM_APP_PORT=8080
+./setup.sh
+```
+
+If Jenkins is already running, restart it after changing the variables:
+
+```bash
+docker compose -f docker-compose.devops.yml up -d --force-recreate jenkins
+```
 
 ### 8. Point Prometheus at the Deployed VM
 

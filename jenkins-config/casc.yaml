@@ -2,6 +2,17 @@ jenkins:
   systemMessage: "DevOps Pipeline - Spring PetClinic"
   numExecutors: 2
   mode: NORMAL
+  globalNodeProperties:
+    - envVars:
+        env:
+          - key: "PRODUCTION_VM_HOST"
+            value: "${PRODUCTION_VM_HOST}"
+          - key: "PRODUCTION_VM_USER"
+            value: "${PRODUCTION_VM_USER}"
+          - key: "PRODUCTION_VM_SSH_PORT"
+            value: "${PRODUCTION_VM_SSH_PORT}"
+          - key: "PRODUCTION_VM_APP_PORT"
+            value: "${PRODUCTION_VM_APP_PORT}"
 
   securityRealm:
     local:
@@ -54,7 +65,7 @@ jobs:
                 remote {
                   url(System.getenv('PIPELINE_REPO_URL'))
                 }
-                branch('*/main')
+                branch('*/' + (System.getenv('PIPELINE_REPO_BRANCH') ?: 'main'))
               }
             }
             scriptPath('Jenkinsfile')

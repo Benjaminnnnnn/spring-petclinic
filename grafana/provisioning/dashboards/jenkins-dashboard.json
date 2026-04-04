@@ -1,73 +1,71 @@
 {
-  "dashboard": {
-    "id": null,
-    "uid": "jenkins-metrics",
-    "title": "Jenkins Performance Dashboard",
-    "tags": ["jenkins", "ci-cd"],
-    "timezone": "browser",
-    "schemaVersion": 16,
-    "version": 0,
-    "refresh": "30s",
-    "panels": [
-      {
-        "id": 1,
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
-        "type": "graph",
-        "title": "Jenkins Build Duration",
-        "targets": [
-          {
-            "expr": "jenkins_job_duration_milliseconds_summary",
-            "legendFormat": "{{job}}",
-            "refId": "A"
-          }
-        ],
-        "yaxes": [
-          {"format": "ms", "label": "Duration"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 2,
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-        "type": "graph",
-        "title": "Jenkins Build Success Rate",
-        "targets": [
-          {
-            "expr": "rate(jenkins_builds_success_build_count_total[5m])",
-            "legendFormat": "Success",
-            "refId": "A"
-          },
-          {
-            "expr": "rate(jenkins_builds_failed_build_count_total[5m])",
-            "legendFormat": "Failed",
-            "refId": "B"
-          }
-        ]
-      },
-      {
-        "id": 3,
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
-        "type": "stat",
-        "title": "Total Jobs",
-        "targets": [
-          {
-            "expr": "jenkins_job_count_value",
-            "refId": "A"
-          }
-        ]
-      },
-      {
-        "id": 4,
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
-        "type": "stat",
-        "title": "Active Executors",
-        "targets": [
-          {
-            "expr": "jenkins_executor_count_value",
-            "refId": "A"
-          }
-        ]
-      }
-    ]
-  }
+  "id": null,
+  "uid": "jenkins-metrics",
+  "title": "Jenkins Performance Dashboard",
+  "tags": ["jenkins", "ci-cd"],
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "version": 0,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "type": "graph",
+      "title": "Jenkins Build Duration",
+      "targets": [
+        {
+          "expr": "jenkins_job_duration_milliseconds_summary",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ],
+      "yaxes": [
+        {"format": "ms", "label": "Duration"},
+        {"format": "short"}
+      ]
+    },
+    {
+      "id": 2,
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "type": "graph",
+      "title": "Jenkins Build Success Rate",
+      "targets": [
+        {
+          "expr": "rate(jenkins_builds_success_build_count_total[5m])",
+          "legendFormat": "Success",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(jenkins_builds_failed_build_count_total[5m])",
+          "legendFormat": "Failed",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "type": "stat",
+      "title": "Total Jobs",
+      "targets": [
+        {
+          "expr": "jenkins_job_count_value",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "type": "stat",
+      "title": "Active Executors",
+      "targets": [
+        {
+          "expr": "jenkins_executor_count_value",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
 }
