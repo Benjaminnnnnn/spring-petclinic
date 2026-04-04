@@ -272,7 +272,7 @@ echo "=========================================="
 echo ""
 
 echo "Starting SonarQube, monitoring, and DAST services..."
-docker compose -f "$COMPOSE_FILE" up -d postgresql sonarqube prometheus grafana burpsuite
+docker compose -f "$COMPOSE_FILE" up -d --remove-orphans postgresql sonarqube prometheus grafana burpsuite
 
 echo ""
 echo "Bootstrapping SonarQube token..."
@@ -285,7 +285,7 @@ fi
 
 echo ""
 echo "Starting Jenkins with the current SonarQube token..."
-docker compose -f "$COMPOSE_FILE" up -d --build --force-recreate jenkins
+docker compose -f "$COMPOSE_FILE" up -d --build --force-recreate --remove-orphans jenkins
 
 echo ""
 echo "=========================================="
