@@ -187,14 +187,16 @@ ${DEPLOY_HOST} ansible_user=${DEPLOY_USER} ansible_port=${DEPLOY_SSH_PORT} ansib
             steps {
                 sh '''
                     DEPLOY_URL=$(printf 'http%s%s' '://' "${DEPLOY_HOST}:${DEPLOY_APP_PORT}")
+                    HEALTH_URL="${DEPLOY_URL}/actuator/health"
+
                     for attempt in $(seq 1 30); do
-                      if curl -fsS "${DEPLOY_URL}" | grep -q "Welcome"; then
+                      if curl -fsS "${HEALTH_URL}" | grep -q '"status":"UP"' && curl -fsSL "${DEPLOY_URL}" > /dev/null; then
                         exit 0
                       fi
                       sleep 2
                     done
 
-                    echo "Unable to verify the deployed welcome page" >&2
+                    echo "Unable to verify the deployed application health or homepage reachability" >&2
                     exit 1
                 '''
             }
