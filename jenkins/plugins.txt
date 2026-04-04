@@ -1,0 +1,12 @@
+ansible
+blueocean
+configuration-as-code
+credentials-binding
+git
+htmlpublisher
+jacoco
+job-dsl
+prometheus
+sonar
+workflow-aggregator
+ws-cleanup

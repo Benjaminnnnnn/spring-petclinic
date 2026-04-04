@@ -41,6 +41,12 @@ out/
 
 ### VS Code ###
 .vscode/
+.vagrant/
+.env
+.jenkins-ssh/
+jenkins-password.txt
+sonarqube-token.txt
+SETUP-SUMMARY.txt
 
 ### CSS ###
 _site/

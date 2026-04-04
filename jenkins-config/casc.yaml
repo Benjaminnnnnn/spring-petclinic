@@ -1,24 +1,29 @@
-# Jenkins Configuration as Code (JCasC)
-# This file automates Jenkins configuration
-
 jenkins:
-  systemMessage: "DevSecOps Pipeline - Spring PetClinic"
-  numExecutors: 2
+  systemMessage: "DevOps Pipeline - Spring PetClinic"
+  numExecutors: 1
   mode: NORMAL
-  
+  globalNodeProperties:
+    - envVars:
+        env:
+          - key: "PRODUCTION_VM_HOST"
+            value: "${PRODUCTION_VM_HOST}"
+          - key: "PRODUCTION_VM_USER"
+            value: "${PRODUCTION_VM_USER}"
+          - key: "PRODUCTION_VM_SSH_PORT"
+            value: "${PRODUCTION_VM_SSH_PORT}"
+          - key: "PRODUCTION_VM_APP_PORT"
+            value: "${PRODUCTION_VM_APP_PORT}"
+
   securityRealm:
     local:
       allowsSignup: false
       users:
         - id: "admin"
           password: "admin"
-          
+
   authorizationStrategy:
     loggedInUsersCanDoAnything:
       allowAnonymousRead: false
-
-  remotingSecurity:
-    enabled: true
 
 credentials:
   system:
@@ -28,52 +33,49 @@ credentials:
               scope: GLOBAL
               id: "sonarqube-token"
               secret: "${SONARQUBE_TOKEN}"
-              description: "SonarQube Authentication Token"
-
-tool:
-  git:
-    installations:
-      - name: "Default"
-        home: "git"
-        
-  maven:
-    installations:
-      - name: "Maven"
-        properties:
-          - installSource:
-              installers:
-                - maven:
-                    id: "3.9.6"
-                    
-  jdk:
-    installations:
-      - name: "JDK17"
-        properties:
-          - installSource:
-              installers:
-                - adoptOpenJdkInstaller:
-                    id: "jdk-17.0.9+9"
+              description: "SonarQube authentication token"
 
 unclassified:
   location:
     url: "http://localhost:8081/"
-    
+
   sonarGlobalConfiguration:
+    buildWrapperEnabled: true
     installations:
       - name: "SonarQube"
         serverUrl: "http://sonarqube:9000"
         credentialsId: "sonarqube-token"
-        
+
   prometheusConfiguration:
     path: "prometheus"
     defaultNamespace: "jenkins"
-    collectingMetricsPeriodInSeconds: 120
-    
-  globalLibraries:
-    libraries:
-      - name: "pipeline-library"
-        retriever:
-          modernSCM:
-            scm:
-              git:
-                remote: "https://github.com/jenkinsci/pipeline-examples.git"
+    collectingMetricsPeriodInSeconds: 30
+    countSuccessfulBuilds: true
+    countFailedBuilds: true
+    countUnstableBuilds: true
+    countAbortedBuilds: true
+    countNotBuiltBuilds: true
+    collectNodeStatus: true
+
+jobs:
+  - script: >
+      pipelineJob('spring-petclinic-pipeline') {
+        description('DevOps pipeline for Spring PetClinic')
+        triggers {
+          scm('H/5 * * * *')
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url(System.getenv('PIPELINE_REPO_URL'))
+                }
+                branch('*/' + (System.getenv('PIPELINE_REPO_BRANCH') ?: 'main'))
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(true)
+          }
+        }
+      }
