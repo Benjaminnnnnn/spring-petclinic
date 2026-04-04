@@ -7,6 +7,8 @@ set -euo pipefail
 
 ENV_FILE="${ENV_FILE:-.env}"
 COMPOSE_FILE="docker-compose.devops.yml"
+PIPELINE_REPO_URL="https://github.com/Benjaminnnnnn/spring-petclinic.git"
+PIPELINE_REPO_BRANCH="${PIPELINE_REPO_BRANCH-}"
 
 default_sonar_host() {
     local sonar_scheme="http"
@@ -27,6 +29,43 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
+
+usage() {
+    cat <<EOF
+Usage: ./setup.sh [--branch <branch>]
+
+Defaults:
+  repo        https://github.com/Benjaminnnnnn/spring-petclinic.git
+  --branch    main
+EOF
+}
+
+parse_args() {
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            --branch)
+                shift
+                [ "$#" -gt 0 ] || { echo "Missing value for --branch" >&2; exit 1; }
+                PIPELINE_REPO_BRANCH="$1"
+                ;;
+            --branch=*)
+                PIPELINE_REPO_BRANCH="${1#*=}"
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                echo "Unknown argument: $1" >&2
+                usage >&2
+                exit 1
+                ;;
+        esac
+        shift
+    done
+}
+
+parse_args "$@"
 
 read_env_value() {
     local key="$1"
@@ -188,7 +227,7 @@ resolve_deploy_target_value() {
 }
 
 GRAFANA_HOST_PORT="$(resolve_env_value "GRAFANA_HOST_PORT" "3030")"
-PIPELINE_REPO_URL="$(resolve_env_value "PIPELINE_REPO_URL" "https://github.com/Benjaminnnnnn/spring-petclinic.git")"
+PIPELINE_REPO_URL="https://github.com/Benjaminnnnnn/spring-petclinic.git"
 PIPELINE_REPO_BRANCH="$(resolve_env_value "PIPELINE_REPO_BRANCH" "main")"
 PRODUCTION_VM_HOST="$(resolve_deploy_target_value "PRODUCTION_VM_HOST" "host.docker.internal")"
 PRODUCTION_VM_USER="$(resolve_env_value "PRODUCTION_VM_USER" "deployer")"

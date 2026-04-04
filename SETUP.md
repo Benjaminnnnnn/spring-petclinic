@@ -145,12 +145,19 @@ Inside the dev container:
 
 ```bash
 chmod 755 setup.sh stop-services.sh
-export PIPELINE_REPO_URL="https://github.com/Benjaminnnnnn/spring-petclinic.git"
-export PIPELINE_REPO_BRANCH="<your-branch>"
 ./setup.sh
 ```
 
-If you want Jenkins to build the default branch, omit `PIPELINE_REPO_BRANCH`.
+[setup.sh](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/setup.sh) defaults to:
+
+- repository: `https://github.com/Benjaminnnnnn/spring-petclinic.git`
+- branch: `main`
+
+If you want Jenkins to use a different branch, run:
+
+```bash
+./setup.sh --branch some-branch
+```
 
 ### What `./setup.sh` Does
 
@@ -303,9 +310,13 @@ vagrant up
 In the dev container:
 
 ```bash
-export PIPELINE_REPO_URL="https://github.com/Benjaminnnnnn/spring-petclinic.git"
-export PIPELINE_REPO_BRANCH="<your-branch>"
 ./setup.sh
+```
+
+Optional override:
+
+```bash
+./setup.sh --branch some-branch
 ```
 
 Then open:
