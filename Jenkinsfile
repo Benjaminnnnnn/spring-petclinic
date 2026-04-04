@@ -156,7 +156,7 @@ pipeline {
         stage('Security Scan - Burp-Compatible DAST') {
             steps {
                 sh '''
-                    TARGET_URL=$(printf 'http%s%s' '://' "host.docker.internal:${APP_TEST_PORT}")
+                    TARGET_URL=$(printf 'http%s%s' '://' "jenkins:${APP_TEST_PORT}")
                     chmod +x burp/zap-api-scan.sh
                     burp/zap-api-scan.sh \
                         "${TARGET_URL}" \
