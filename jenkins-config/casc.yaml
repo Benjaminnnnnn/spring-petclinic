@@ -50,6 +50,12 @@ unclassified:
     path: "prometheus"
     defaultNamespace: "jenkins"
     collectingMetricsPeriodInSeconds: 30
+    countSuccessfulBuilds: true
+    countFailedBuilds: true
+    countUnstableBuilds: true
+    countAbortedBuilds: true
+    countNotBuiltBuilds: true
+    collectNodeStatus: true
 
 jobs:
   - script: >

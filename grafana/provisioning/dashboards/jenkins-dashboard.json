@@ -1,70 +1,210 @@
 {
   "id": null,
   "uid": "jenkins-metrics",
-  "title": "Jenkins Performance Dashboard",
-  "tags": ["jenkins", "ci-cd"],
+  "title": "Jenkins Default Metrics Dashboard",
+  "tags": ["jenkins", "prometheus"],
   "timezone": "browser",
   "schemaVersion": 16,
-  "version": 0,
+  "version": 2,
   "refresh": "30s",
   "panels": [
     {
       "id": 1,
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
-      "type": "graph",
-      "title": "Jenkins Build Duration",
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+      "type": "stat",
+      "title": "Jenkins Up",
       "targets": [
         {
-          "expr": "jenkins_job_duration_milliseconds_summary",
-          "legendFormat": "{{job}}",
+          "expr": "jenkins_jenkins_up",
           "refId": "A"
         }
-      ],
-      "yaxes": [
-        {"format": "ms", "label": "Duration"},
-        {"format": "short"}
       ]
     },
     {
       "id": 2,
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-      "type": "graph",
-      "title": "Jenkins Build Success Rate",
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+      "type": "stat",
+      "title": "Queue Size",
       "targets": [
         {
-          "expr": "rate(jenkins_builds_success_build_count_total[5m])",
-          "legendFormat": "Success",
+          "expr": "jenkins_queue_size_value",
           "refId": "A"
-        },
-        {
-          "expr": "rate(jenkins_builds_failed_build_count_total[5m])",
-          "legendFormat": "Failed",
-          "refId": "B"
         }
       ]
     },
     {
       "id": 3,
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
       "type": "stat",
-      "title": "Total Jobs",
+      "title": "Busy Executors",
       "targets": [
         {
-          "expr": "jenkins_job_count_value",
+          "expr": "jenkins_executor_in_use_value",
           "refId": "A"
         }
       ]
     },
     {
       "id": 4,
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
       "type": "stat",
-      "title": "Active Executors",
+      "title": "Total Executors",
       "targets": [
         {
           "expr": "jenkins_executor_count_value",
           "refId": "A"
         }
+      ]
+    },
+    {
+      "id": 5,
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 6},
+      "type": "stat",
+      "title": "Online Nodes",
+      "targets": [
+        {
+          "expr": "jenkins_node_online_value",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 6},
+      "type": "stat",
+      "title": "Total Nodes",
+      "targets": [
+        {
+          "expr": "jenkins_node_count_value",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 6},
+      "type": "stat",
+      "title": "Projects",
+      "targets": [
+        {
+          "expr": "jenkins_project_count_value",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 6},
+      "type": "stat",
+      "title": "Health Score",
+      "targets": [
+        {
+          "expr": "jenkins_health_check_score",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "type": "graph",
+      "title": "Build Duration",
+      "targets": [
+        {
+          "expr": "jenkins_job_building_duration{quantile=\"0.5\"}",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "jenkins_job_building_duration{quantile=\"0.95\"}",
+          "legendFormat": "p95",
+          "refId": "B"
+        }
+      ],
+      "yaxes": [
+        {"format": "short", "label": "Duration"},
+        {"format": "short"}
+      ]
+    },
+    {
+      "id": 10,
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "type": "graph",
+      "title": "Build Counts",
+      "targets": [
+        {
+          "expr": "increase(jenkins_runs_success_total[6h])",
+          "legendFormat": "success",
+          "refId": "A"
+        },
+        {
+          "expr": "increase(jenkins_runs_failure_total[6h])",
+          "legendFormat": "failed",
+          "refId": "B"
+        },
+        {
+          "expr": "increase(jenkins_runs_unstable_total[6h])",
+          "legendFormat": "unstable",
+          "refId": "C"
+        },
+        {
+          "expr": "increase(jenkins_runs_aborted_total[6h])",
+          "legendFormat": "aborted",
+          "refId": "D"
+        }
+      ],
+      "yaxes": [
+        {"format": "short", "label": "Builds"},
+        {"format": "short"}
+      ]
+    },
+    {
+      "id": 11,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+      "type": "graph",
+      "title": "Queue State",
+      "targets": [
+        {
+          "expr": "jenkins_queue_size_value",
+          "legendFormat": "queue size",
+          "refId": "A"
+        },
+        {
+          "expr": "jenkins_queue_pending_value",
+          "legendFormat": "pending",
+          "refId": "B"
+        },
+        {
+          "expr": "jenkins_queue_stuck_value",
+          "legendFormat": "stuck",
+          "refId": "C"
+        }
+      ],
+      "yaxes": [
+        {"format": "short", "label": "Jobs"},
+        {"format": "short"}
+      ]
+    },
+    {
+      "id": 12,
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+      "type": "graph",
+      "title": "Executor Utilization",
+      "targets": [
+        {
+          "expr": "jenkins_executor_in_use_value",
+          "legendFormat": "in use",
+          "refId": "A"
+        },
+        {
+          "expr": "jenkins_executor_free_value",
+          "legendFormat": "free",
+          "refId": "B"
+        }
+      ],
+      "yaxes": [
+        {"format": "short", "label": "Executors"},
+        {"format": "short"}
       ]
     }
   ]
