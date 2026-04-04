@@ -135,8 +135,8 @@ pipeline {
             steps {
                 sh '''
                     TARGET_URL=$(printf 'http%s%s' '://' "jenkins:${APP_TEST_PORT}")
-                    chmod +x burp/zap-api-scan.sh
-                    burp/zap-api-scan.sh \
+                    chmod +x scripts/run-zap-api-scan.sh
+                    scripts/run-zap-api-scan.sh \
                         "${TARGET_URL}" \
                         "${DAST_API_BASE}" \
                         "${DAST_API_KEY}" \

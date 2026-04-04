@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-TARGET_URL="${1:?Usage: zap-api-scan.sh <target-url> [zap-api-base] [zap-api-key] [report-dir]}"
+TARGET_URL="${1:?Usage: run-zap-api-scan.sh <target-url> [zap-api-base] [zap-api-key] [report-dir]}"
 ZAP_API_BASE="${2:-burpsuite:8090}"
 ZAP_API_KEY="${3:-burp-api-key}"
 REPORT_DIR="${4:-build/reports/dast}"

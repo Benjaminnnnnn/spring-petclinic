@@ -3,14 +3,16 @@
 set -euo pipefail
 
 default_sonar_host() {
+    local sonar_scheme="http"
+
     if [ -f "/.dockerenv" ]; then
         if command -v getent >/dev/null 2>&1 && getent hosts host.docker.internal >/dev/null 2>&1; then
-            printf '%s' "http://host.docker.internal:9000"
+            printf '%s://%s' "$sonar_scheme" "host.docker.internal:9000"
             return 0
         fi
     fi
 
-    printf '%s' "http://localhost:9000"
+    printf '%s://%s' "$sonar_scheme" "localhost:9000"
 }
 
 ENV_FILE="${ENV_FILE:-.env}"

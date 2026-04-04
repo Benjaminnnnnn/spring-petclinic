@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Simple script to stop DevOps services
 set -e
 
 echo "Stopping DevOps services..."

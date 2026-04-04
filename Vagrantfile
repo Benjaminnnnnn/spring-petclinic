@@ -56,7 +56,7 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
   config.vm.provision "shell",
-    path: "vagrant/bootstrap.sh",
+    path: "scripts/bootstrap-vagrant-vm.sh",
     privileged: true
 
   config.trigger.after :up, :reload, :provision do |trigger|
