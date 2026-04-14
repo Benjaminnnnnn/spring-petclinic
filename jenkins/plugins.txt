@@ -8,5 +8,6 @@ jacoco
 job-dsl
 prometheus
 sonar
+timestamper
 workflow-aggregator
 ws-cleanup

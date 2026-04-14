@@ -57,6 +57,20 @@ unclassified:
     countNotBuiltBuilds: true
     collectNodeStatus: true
 
+tool:
+  jdk:
+    installations:
+      - name: "JDK17"
+        home: "/opt/java/openjdk"
+  maven:
+    installations:
+      - name: "Maven"
+        properties:
+          - installSource:
+              installers:
+                - maven:
+                    id: "3.9.9"
+
 jobs:
   - script: >
       pipelineJob('spring-petclinic-pipeline') {

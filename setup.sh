@@ -223,6 +223,52 @@ resolve_deploy_target_value() {
     fi
 }
 
+wait_for_jenkins() {
+    local attempts="${1:-60}"
+    local delay_seconds="${2:-5}"
+    local status
+
+    for ((attempt = 1; attempt <= attempts; attempt++)); do
+        status="$(curl -fsS "http://localhost:${JENKINS_HOST_PORT}/login" 2>/dev/null || true)"
+        if [ -n "$status" ]; then
+            return 0
+        fi
+        sleep "$delay_seconds"
+    done
+
+    return 1
+}
+
+trigger_jenkins_build() {
+    local crumb_response crumb_field crumb_value
+
+    if ! wait_for_jenkins; then
+        echo "Jenkins did not become ready in time." >&2
+        return 1
+    fi
+
+    crumb_response="$(
+        curl -fsS -u "${JENKINS_USER}:${JENKINS_PASSWORD}" \
+            "http://localhost:${JENKINS_HOST_PORT}/crumbIssuer/api/json" 2>/dev/null || true
+    )"
+
+    crumb_field="$(printf '%s' "$crumb_response" | sed -n 's/.*"crumbRequestField":"\([^"]*\)".*/\1/p')"
+    crumb_value="$(printf '%s' "$crumb_response" | sed -n 's/.*"crumb":"\([^"]*\)".*/\1/p')"
+
+    if [ -z "$crumb_field" ] || [ -z "$crumb_value" ]; then
+        echo "Failed to retrieve Jenkins crumb." >&2
+        return 1
+    fi
+
+    curl -fsS -u "${JENKINS_USER}:${JENKINS_PASSWORD}" \
+        -X POST "http://localhost:${JENKINS_HOST_PORT}/job/${JENKINS_JOB}/build" \
+        -H "${crumb_field}: ${crumb_value}" >/dev/null
+}
+
+JENKINS_HOST_PORT="$(resolve_env_value "JENKINS_HOST_PORT" "8081")"
+JENKINS_USER="$(resolve_env_value "JENKINS_USER" "admin")"
+JENKINS_PASSWORD="$(resolve_env_value "JENKINS_PASSWORD" "admin")"
+JENKINS_JOB="spring-petclinic-pipeline"
 GRAFANA_HOST_PORT="$(resolve_env_value "GRAFANA_HOST_PORT" "3030")"
 PRODUCTION_VM_HOST="$(resolve_deploy_target_value "PRODUCTION_VM_HOST" "host.docker.internal")"
 PRODUCTION_VM_USER="$(resolve_env_value "PRODUCTION_VM_USER" "deployer")"
@@ -286,6 +332,14 @@ fi
 echo ""
 echo "Starting Jenkins with the current SonarQube token..."
 docker compose -f "$COMPOSE_FILE" up -d --build --force-recreate --remove-orphans jenkins
+
+echo ""
+echo "Triggering initial pipeline build..."
+if trigger_jenkins_build; then
+    echo -e "${GREEN}✓ Pipeline build triggered${NC}"
+else
+    echo -e "${YELLOW}⚠ Could not trigger pipeline build automatically. Trigger it manually at http://localhost:${JENKINS_HOST_PORT}.${NC}"
+fi
 
 echo ""
 echo "=========================================="

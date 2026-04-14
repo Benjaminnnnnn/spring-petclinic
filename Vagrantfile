@@ -17,7 +17,7 @@ vm_name = ENV.fetch("VAGRANT_VM_NAME", "petclinic-prod")
 vm_hostname = ENV.fetch("VAGRANT_VM_HOSTNAME", "petclinic-prod")
 vm_memory = Integer(ENV.fetch("VAGRANT_VM_MEMORY", "2048"))
 vm_cpus = Integer(ENV.fetch("VAGRANT_VM_CPUS", "2"))
-enable_private_network = ENV.fetch("VAGRANT_ENABLE_PRIVATE_NETWORK", "false") == "true"
+enable_private_network = ENV.fetch("VAGRANT_ENABLE_PRIVATE_NETWORK", "true") == "true"
 vm_private_ip = ENV.fetch("VAGRANT_VM_IP", "192.168.56.20")
 host_ssh_port = Integer(ENV.fetch("VAGRANT_HOST_SSH_PORT", "2222"))
 host_app_port = Integer(ENV.fetch("VAGRANT_HOST_APP_PORT", "8080"))
