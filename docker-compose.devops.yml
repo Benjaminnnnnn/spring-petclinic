@@ -1,7 +1,5 @@
-version: '3.8'
-
 networks:
-  devsecops-network:
+  devops-network:
     driver: bridge
 
 volumes:
@@ -19,7 +17,7 @@ services:
     image: postgres:15-alpine
     container_name: postgresql
     networks:
-      - devsecops-network
+      - devops-network
     environment:
       POSTGRES_USER: sonar
       POSTGRES_PASSWORD: sonar
@@ -40,7 +38,7 @@ services:
       postgresql:
         condition: service_healthy
     networks:
-      - devsecops-network
+      - devops-network
     environment:
       SONAR_JDBC_URL: jdbc:postgresql://postgresql:5432/sonarqube
       SONAR_JDBC_USERNAME: sonar
@@ -59,17 +57,26 @@ services:
 
   # Jenkins
   jenkins:
-    image: jenkins/jenkins:lts-jdk17
+    build:
+      context: ./jenkins
     container_name: jenkins
     privileged: true
     user: root
+    depends_on:
+      sonarqube:
+        condition: service_healthy
     networks:
-      - devsecops-network
+      - devops-network
     environment:
-      - DOCKER_HOST=tcp://docker:2376
-      - DOCKER_CERT_PATH=/certs/client
-      - DOCKER_TLS_VERIFY=1
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+      - CASC_JENKINS_CONFIG=/var/jenkins_config/casc.yaml
+      - SONARQUBE_TOKEN=${SONARQUBE_TOKEN:-admin}
+      - PIPELINE_REPO_URL=${PIPELINE_REPO_URL:-https://github.com/Benjaminnnnnn/spring-petclinic.git}
+      - PIPELINE_REPO_BRANCH=${PIPELINE_REPO_BRANCH:-main}
+      - PRODUCTION_VM_HOST=${PRODUCTION_VM_HOST:-host.docker.internal}
+      - PRODUCTION_VM_USER=${PRODUCTION_VM_USER:-deployer}
+      - PRODUCTION_VM_SSH_PORT=${PRODUCTION_VM_SSH_PORT:-2222}
+      - PRODUCTION_VM_APP_PORT=${PRODUCTION_VM_APP_PORT:-8080}
     ports:
       - "8081:8080"
       - "50000:50000"
@@ -77,6 +84,9 @@ services:
       - jenkins-data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
       - ./jenkins-config:/var/jenkins_config
+      - ./.jenkins-ssh:/root/.ssh:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/login || exit 1"]
       interval: 30s
@@ -88,7 +98,7 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     networks:
-      - devsecops-network
+      - devops-network
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -98,7 +108,10 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/targets:/etc/prometheus/targets:ro
       - prometheus-data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/healthy || exit 1"]
       interval: 30s
@@ -110,13 +123,13 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     networks:
-      - devsecops-network
+      - devops-network
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
     ports:
-      - "3000:3000"
+      - "${GRAFANA_HOST_PORT:-3030}:3000"
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
@@ -135,11 +148,12 @@ services:
     image: zaproxy/zap-stable
     container_name: burpsuite
     networks:
-      - devsecops-network
+      - devops-network
     command: zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true -config api.key=burp-api-key
     ports:
       - "8090:8090"
-      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8090 || exit 1"]
       interval: 30s

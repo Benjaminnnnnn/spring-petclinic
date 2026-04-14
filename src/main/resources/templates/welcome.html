@@ -5,9 +5,15 @@
 <body>
 
   <h2 th:text="#{welcome}">Welcome</h2>
+  <div class="alert alert-info" th:if="${deploymentVersion != null or deploymentRevision != null or deploymentTime != null}">
+    <p class="mb-0" th:if="${deploymentVersion != null}" th:text="${deploymentVersion}"></p>
+    <p class="mb-0" th:if="${deploymentRevision != null}" th:text="${deploymentRevision}"></p>
+    <p class="mb-0" th:if="${deploymentTime != null}" th:text="${deploymentTime}"></p>
+  </div>
   <div class="row">
     <div class="col-md-12">
-      <img class="img-responsive" src="../static/resources/images/pets.png" th:src="@{/resources/images/pets.png}" />
+      <!-- <img class="img-responsive" src="../static/resources/images/pets.png" th:src="@{/resources/images/pets.png}" /> -->
+      <img class="img-responsive" src="../static/resources/images/dog.avif" th:src="@{/resources/images/dog.avif}" />
     </div>
   </div>
 

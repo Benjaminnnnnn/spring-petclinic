@@ -1,0 +1,11 @@
+[
+  {
+    "labels": {
+      "service": "spring-petclinic",
+      "environment": "local-demo"
+    },
+    "targets": [
+      "host.docker.internal:8080"
+    ]
+  }
+]
