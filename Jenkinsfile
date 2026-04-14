@@ -13,6 +13,10 @@ pipeline {
         DEPLOY_APP_PORT = "${env.PRODUCTION_VM_APP_PORT ?: '8080'}"
     }
 
+    triggers {
+        githubPush()
+    }
+
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timeout(time: 1, unit: 'HOURS')

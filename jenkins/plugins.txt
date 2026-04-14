@@ -3,6 +3,7 @@ blueocean
 configuration-as-code
 credentials-binding
 git
+github
 htmlpublisher
 jacoco
 job-dsl
