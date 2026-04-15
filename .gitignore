@@ -52,3 +52,5 @@ SETUP-SUMMARY.txt
 _site/
 *.css
 !petclinic.css
+
+*.mp4
