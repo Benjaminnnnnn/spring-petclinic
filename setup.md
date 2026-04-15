@@ -60,6 +60,11 @@ VirtualBox does not support Apple Silicon. Use VMware Fusion instead.
 
 1. Download and install [VMware Fusion](https://www.vmware.com/products/fusion.html) (free for personal use)
 2. Download and install the [Vagrant VMware Utility](https://developer.hashicorp.com/vagrant/docs/providers/vmware/vagrant-vmware-utility)
+```bash
+brew tap hashicorp/tap
+brew install hashicorp/tap/hashicorp-vagrant
+brew install --cask vagrant-vmware-utility
+```
 3. Install the Vagrant VMware plugin:
 
 ```bash
