@@ -4,7 +4,7 @@
 
 <body>
 
-  <h2 th:text="#{welcome}">Welcome</h2>
+  <h2 th:text="#{welcome}">Welcome test</h2>
   <div class="alert alert-info" th:if="${deploymentVersion != null or deploymentRevision != null or deploymentTime != null}">
     <p class="mb-0" th:if="${deploymentVersion != null}" th:text="${deploymentVersion}"></p>
     <p class="mb-0" th:if="${deploymentRevision != null}" th:text="${deploymentRevision}"></p>
