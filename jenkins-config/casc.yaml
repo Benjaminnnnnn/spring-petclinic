@@ -76,7 +76,7 @@ jobs:
       pipelineJob('spring-petclinic-pipeline') {
         description('DevOps pipeline for Spring PetClinic')
         triggers {
-          scm('H/5 * * * *')
+          scm('* * * * *')
         }
         definition {
           cpsScm {
