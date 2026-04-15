@@ -1,331 +1,366 @@
-# Spring PetClinic DevOps Setup
+# Spring PetClinic DevSecOps Pipeline — Setup Guide
 
-This guide is the single setup document for this repository. Follow it from top to bottom on a clean machine and you should be able to bring up the full local CI/CD pipeline, run Jenkins, and deploy the application to the production VM.
+This guide walks you through the complete setup from a fresh machine to a running CI/CD pipeline with automated deployment. Follow the steps in order.
 
-The setup has two environments:
+---
 
-- **Host machine**: runs the production VM with Vagrant
-- **Dev container**: runs the containerized DevOps stack with Docker
+## Overview
 
-Do not swap them:
+The setup uses **two separate environments** that must not be swapped:
 
-- run `vagrant` commands on the **host**
-- run `./setup.sh` inside the **dev container**
+| Environment | Purpose | Where to run it |
+|---|---|---|
+| **Host machine** | Runs the production VM | Your laptop/desktop |
+| **Dev container** | Runs the DevOps stack (Jenkins, SonarQube, etc.) | Inside VS Code |
 
-## 1. What This Repository Starts
+The production application (Spring PetClinic) is **not** deployed into Docker containers. Jenkins builds it and deploys it to the Vagrant VM using Ansible.
 
-The local DevOps stack starts these services:
+### What Gets Started
 
-- Jenkins
-- SonarQube
-- Prometheus
-- Grafana
-- OWASP ZAP in the `burpsuite` service
-- PostgreSQL for SonarQube
+After setup, you will have:
 
-For the security-analysis requirement in [instruction.md](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/instruction.md), this repo uses OWASP ZAP in the `burpsuite` container slot because it is easier to automate headlessly in Docker than Burp Suite Community Edition.
+- **Production VM** (Vagrant): the target environment where the app runs
+- **Jenkins** (`localhost:8081`): builds, tests, and deploys the app
+- **SonarQube** (`localhost:9000`): static code analysis and quality gate
+- **Prometheus** (`localhost:9090`): metrics collection
+- **Grafana** (`localhost:3030`): metrics dashboard
+- **OWASP ZAP** (`localhost:8090`): dynamic application security testing
+- **Spring PetClinic app** (`localhost:8080`): deployed by Jenkins to the VM
 
-The production application itself is **not** deployed into those containers. Jenkins deploys the Spring PetClinic JAR to a separate Linux VM using Ansible.
+---
 
-## 2. Prerequisites
+## Step 1: Install Prerequisites
 
-### Host Machine
+Starting assumption: **Docker Desktop is already installed and running.**
 
-Install:
+You still need to install the following tools on your host machine.
 
-- Docker Desktop
-- Git
-- VS Code
-- VS Code Dev Containers extension
-- Vagrant
+### Required for everyone
 
-Install one VM provider:
+| Tool | Purpose | Install |
+|---|---|---|
+| Git | Clone the repository | [git-scm.com](https://git-scm.com) or `brew install git` |
+| VS Code | Open the dev container | [code.visualstudio.com](https://code.visualstudio.com) |
+| VS Code Dev Containers extension | Run the dev container | Install from VS Code Extensions panel (`ms-vscode-remote.remote-containers`) |
+| Vagrant | Manage the production VM | See below |
+| VM provider | Runs the Vagrant VM | See below — depends on your CPU |
 
-- Intel / AMD Mac:
-  - VirtualBox
-- Apple Silicon Mac:
-  - VMware Fusion
-  - Vagrant VMware Utility
-  - `vagrant-vmware-desktop` plugin
+### Install Vagrant and a VM provider
 
-Example install commands:
-
-Intel / AMD host:
+**Intel / AMD Mac or Linux:**
 
 ```bash
-brew install --cask docker
 brew install --cask vagrant
 brew install --cask virtualbox
 ```
 
-Apple Silicon host:
+**Apple Silicon Mac (M1/M2/M3):**
+
+VirtualBox does not support Apple Silicon. Use VMware Fusion instead.
+
+1. Download and install [VMware Fusion](https://www.vmware.com/products/fusion.html) (free for personal use)
+2. Download and install the [Vagrant VMware Utility](https://developer.hashicorp.com/vagrant/docs/providers/vmware/vagrant-vmware-utility)
+```bash
+brew tap hashicorp/tap
+brew install hashicorp/tap/hashicorp-vagrant
+brew install --cask vagrant-vmware-utility
+```
+3. Install the Vagrant VMware plugin:
 
 ```bash
-brew install --cask docker
 brew install --cask vagrant
 vagrant plugin install vagrant-vmware-desktop
 ```
 
-Then install VMware Fusion and the Vagrant VMware Utility manually.
+### Verify your installs
 
-### Dev Container
+```bash
+git --version
+vagrant --version
+docker --version
+```
 
-You only need:
+All three commands should print a version number before continuing.
 
-- Docker Desktop running on the host
-- this repository opened in the VS Code dev container
+---
 
-## 3. Clone Your Fork
+## Step 2: Clone the Repository
 
-Fork the repository first, then clone your fork on the host:
+Run this on the host machine:
 
 ```bash
 git clone https://github.com/Benjaminnnnnn/spring-petclinic.git
 cd spring-petclinic
 ```
 
-If you are working on a branch other than `main`, create it now.
+If you are working on a specific branch, check it out now:
 
-## 4. Host Setup: Start the Production VM
+```bash
+git checkout <your-branch>
+```
 
-From the repository root on the host:
+---
+
+## Step 3: Start the Production VM
+
+Run this on the **host machine** from the repository root:
 
 ```bash
 vagrant up
 ```
 
-What this does:
+This will take a few minutes on first run. It will:
 
-- creates the Linux VM from [Vagrantfile](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/Vagrantfile)
-- provisions the `deployer` user
-- installs Python 3 and Java 17 in the VM
-- exports deployment values into [`.env`](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/.env)
-- generates a Jenkins deploy key under [`.jenkins-ssh/`](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/.jenkins-ssh)
-- installs that key into the VM for the `deployer` user
+1. Download the Ubuntu VM image (only on first run)
+2. Create and boot the VM
+3. Install Python 3, Java 17, and SSH server inside the VM
+4. Create a `deployer` user with SSH access
+5. Generate a Jenkins deploy key under `.jenkins-ssh/`
+6. Install the deploy key on the VM for the `deployer` user
+7. Write deployment connection values into `.env`
 
-The host-side automation is performed by:
-
-- [Vagrantfile](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/Vagrantfile)
-- [export-vagrant-env.sh](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/scripts/export-vagrant-env.sh)
-- [bootstrap-vagrant-vm.sh](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/scripts/bootstrap-vagrant-vm.sh)
-
-### Verify the VM
-
-Run these on the host:
+### Verify the VM is ready
 
 ```bash
 vagrant status
 vagrant ssh -c "hostname && python3 --version && java -version"
 ```
 
-You should see:
-
+Expected output:
 - VM status is `running`
-- Python 3 is installed
-- Java 17 is installed
+- Python 3 is present
+- Java 17 is present
 
-You should also see deployment values in [`.env`](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/.env):
+Also confirm `.env` was written with deployment values:
 
-- `PRODUCTION_VM_HOST`
-- `PRODUCTION_VM_USER`
-- `PRODUCTION_VM_SSH_PORT`
-- `PRODUCTION_VM_APP_PORT`
+```bash
+cat .env
+```
 
-## 5. Open the Repository in the Dev Container
+You should see `PRODUCTION_VM_HOST`, `PRODUCTION_VM_USER`, `PRODUCTION_VM_SSH_PORT`, and `PRODUCTION_VM_APP_PORT`.
 
-From VS Code on the host:
+---
 
-1. Open the repository folder
-2. Reopen it in the dev container
-3. Open a terminal inside the dev container
+## Step 4: Open the Dev Container
 
-All remaining steps in this guide should be run inside that dev container terminal unless a step explicitly says otherwise.
+1. Open VS Code
+2. Open the `spring-petclinic` folder (`File → Open Folder`)
+3. VS Code will detect `.devcontainer/devcontainer.json` and show a prompt — click **Reopen in Container**
 
-## 6. Dev Container Setup: Start the DevOps Stack
+   If you do not see the prompt: open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) and run **Dev Containers: Reopen in Container**
 
-Inside the dev container:
+4. Wait for the container to build and start (first time takes a few minutes)
+5. Open a new terminal inside VS Code — it will be inside the dev container
+
+> All remaining steps must be run in this dev container terminal, not in a host terminal.
+
+---
+
+## Step 5: Start the DevOps Stack
+
+Inside the dev container terminal:
 
 ```bash
 ./setup.sh
 ```
 
-[setup.sh](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/setup.sh) defaults to:
+This single command does everything:
 
-- repository: `https://github.com/Benjaminnnnnn/spring-petclinic.git`
-- branch: `main`
+1. Pulls all required Docker images (Jenkins, SonarQube, PostgreSQL, Prometheus, Grafana, OWASP ZAP)
+2. Starts PostgreSQL and SonarQube, waits for them to be healthy
+3. Generates a SonarQube token for Jenkins
+4. Starts Jenkins with the pipeline job pre-configured via JCasC
+5. Triggers the first pipeline build automatically
+6. Writes all effective values to `.env`
 
-If you want Jenkins to use a different branch, run:
+This will take **5–10 minutes** on first run due to image pulls and SonarQube startup time.
+
+### Optional: use a specific branch
+
+By default, Jenkins pulls from the `main` branch. To use a different branch:
 
 ```bash
-./setup.sh --branch some-branch
+./setup.sh --branch feat/your-feature-branch
 ```
 
-Running `./setup.sh` again without `--branch` switches Jenkins back to `main`.
+---
 
-### What `./setup.sh` Does
+## Step 6: Verify the Services
 
-[setup.sh](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/setup.sh) is the main automation script. It:
+After `./setup.sh` finishes, open these URLs **in a browser on your host machine**:
 
-- pulls the required Docker images
-- starts PostgreSQL, SonarQube, Prometheus, Grafana, and OWASP ZAP
-- bootstraps a fresh SonarQube token for Jenkins
-- starts Jenkins with JCasC and the pipeline job preconfigured
-- persists effective values in [`.env`](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/.env)
+| Service | URL | Default login |
+|---|---|---|
+| Jenkins | `http://localhost:8081` | `admin` / `admin` |
+| SonarQube | `http://localhost:9000` | `admin` / `admin` |
+| Prometheus | `http://localhost:9090` | — |
+| Grafana | `http://localhost:3030` | `admin` / `admin` |
+| OWASP ZAP | `http://localhost:8090` | — |
 
-## 7. Service URLs
+In Jenkins, you should see:
 
-After `./setup.sh` finishes, open these on the **host machine**:
+- Jenkins is initialized (no setup wizard)
+- A pipeline job named `spring-petclinic-pipeline` already exists
+- SonarQube is pre-configured
+- A build is already running or queued (triggered automatically by `setup.sh`)
 
-- Jenkins: `http://localhost:8081`
-- SonarQube: `http://localhost:9000`
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3030`
-- OWASP ZAP API: `http://localhost:8090`
+---
 
-The deployed production application should be reachable on the host at:
+## Step 7: Wait for the First Pipeline Build
 
-- `http://localhost:8080`
+The first build will:
 
-If your Vagrant/provider combination exports a guest IP instead of relying on forwarded host ports, use the values in [`.env`](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/.env), especially:
+1. Check out the repository from GitHub
+2. Build the Spring Boot JAR
+3. Run unit tests and generate JaCoCo coverage
+4. Run SonarQube static analysis
+5. Wait for the SonarQube quality gate
+6. Build a Docker image
+7. Run OWASP ZAP security scan
+8. Deploy the JAR to the Vagrant VM via Ansible
+9. Verify the deployed application is healthy
 
-- `PRODUCTION_VM_HOST`
-- `PRODUCTION_VM_APP_PORT`
+The first build takes **10–15 minutes**.
 
-## 8. Default Credentials
+Watch it in Jenkins at `http://localhost:8081`.
 
-- Jenkins: `admin / admin`
-- SonarQube: `admin / admin` on a fresh stack
-- Grafana: `admin / admin`
+---
 
-## 9. Verify Jenkins Auto-Configuration
+## Step 8: Verify the Deployed Application
 
-Open Jenkins at `http://localhost:8081`.
+After the pipeline build succeeds, open the production app on your host machine:
 
-You should see:
-
-- Jenkins is already initialized
-- a pipeline job named `spring-petclinic-pipeline`
-- SonarQube configured through JCasC
-- Prometheus metrics enabled for Jenkins
-
-The auto-configured Jenkins job comes from [jenkins-config/casc.yaml](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/jenkins-config/casc.yaml).
-
-## 10. Run the Pipeline
-
-In Jenkins:
-
-1. Open `spring-petclinic-pipeline`
-2. Trigger a build
-
-The pipeline should:
-
-- checkout the repository from your fork
-- build the Spring Boot project
-- run unit and integration tests
-- publish JaCoCo test results
-- run SonarQube analysis
-- build the Docker image
-- run Dynamic Application Security Testing
-- deploy the application to the VM with Ansible
-- verify the deployed application health and homepage
-
-## 11. Verify Deployment
-
-After the pipeline succeeds, open the production app from the host:
-
-```text
+```
 http://localhost:8080
 ```
 
 You should see the Spring PetClinic welcome page.
 
-You can also verify from the VM directly on the host:
+You can also verify directly from the host:
 
 ```bash
 vagrant ssh -c "curl -fsS http://localhost:8080/actuator/health && echo"
 ```
 
-## 12. Verify Automatic Rebuild and Redeploy
+Expected response contains `"status":"UP"`.
 
-To prove the CI/CD flow works:
+---
 
-1. Make a visible code change in your branch
-2. Commit and push it to your fork
-3. Wait for Jenkins SCM polling to detect it
-4. Verify Jenkins starts a new pipeline run automatically
-5. Verify the deployed application updates on the VM
+## Step 9: Verify Automatic CI/CD (Optional)
 
-The SCM polling trigger is configured in [jenkins-config/casc.yaml](/Users/benjaminzhuang/workspace/cmu/spring-petclinic/jenkins-config/casc.yaml).
+To confirm the full CI/CD loop works:
 
-## 13. Stop or Reset the Stack
+1. Make any visible code change (e.g., edit the welcome page title)
+2. Commit and push to your branch
+3. Jenkins polls SCM every 5 minutes — it will detect the push and start a new build automatically
+4. After the build succeeds, reload `http://localhost:8080` to see the change live
+
+---
+
+## Stopping and Resetting
+
+### Stop the DevOps stack (keep data)
 
 Inside the dev container:
-
-Stop containers but keep data:
-
-```bash
-./stop-services.sh
-```
-
-Equivalent command:
 
 ```bash
 docker compose -f docker-compose.devops.yml down
 ```
 
-Reset the Docker-based DevOps stack completely:
+Restart it later with `./setup.sh`.
+
+### Full reset (wipe all data)
+
+Inside the dev container:
 
 ```bash
 docker compose -f docker-compose.devops.yml down -v
-```
-
-Then rerun:
-
-```bash
 ./setup.sh
 ```
 
-If you also want to recreate the VM, do that on the host:
+### Destroy and recreate the VM
+
+On the host machine:
 
 ```bash
 vagrant destroy -f
 vagrant up
 ```
 
-## 14. Common Mistakes
+Then run `./setup.sh` again inside the dev container.
 
-- Running `./setup.sh` on the host instead of in the dev container
-- Running `vagrant up` in the dev container instead of on the host
-- Using a stale SonarQube or Jenkins volume from an older environment
-- Forgetting to set `PIPELINE_REPO_URL` to your fork before starting Jenkins
-- Verifying the deployed app inside the Docker stack instead of on the VM
+---
 
-## 15. Quick Start Summary
+## Troubleshooting
 
-On the host:
+### VM fails to start on Apple Silicon
+
+Make sure VMware Fusion, the Vagrant VMware Utility, and the `vagrant-vmware-desktop` plugin are all installed. The plugin version must be compatible with your Vagrant version — run `vagrant plugin update vagrant-vmware-desktop` if unsure.
+
+### `./setup.sh` fails with "SonarQube did not reach UP state"
+
+SonarQube can be slow on first startup. Run `./setup.sh` again — it is safe to re-run.
+
+### Jenkins build fails: tool "Maven" or "JDK17" not found
+
+Jenkins was rebuilt without the tool configuration. Re-run:
 
 ```bash
+docker compose -f docker-compose.devops.yml up -d --build --force-recreate jenkins
+```
+
+### Jenkins build fails: `http://` URL in Jenkinsfile fails checkstyle
+
+The `nohttp` checkstyle rule rejects literal `http://` URLs in source files. The local Jenkinsfile already uses the `printf` workaround to avoid this. Make sure the branch Jenkins is building has the latest Jenkinsfile. If Jenkins is still targeting `main` and `main` is outdated, push your branch and run:
+
+```bash
+./setup.sh --branch your-branch
+```
+
+### App not reachable at `localhost:8080`
+
+Check the VM is running and the pipeline has succeeded:
+
+```bash
+vagrant status
+vagrant ssh -c "ss -tlnp | grep 8080"
+```
+
+If port 8080 is not listening, the app has not been deployed yet. Trigger a Jenkins build.
+
+### `vagrant up` says port 2222 is already in use
+
+Another VM is using the SSH forwarded port. Either stop it or set a different port:
+
+```bash
+VAGRANT_HOST_SSH_PORT=2223 vagrant up
+```
+
+---
+
+## Quick Reference
+
+**First-time setup — run these in order:**
+
+```bash
+# 1. Host machine
 git clone https://github.com/Benjaminnnnnn/spring-petclinic.git
 cd spring-petclinic
 vagrant up
-```
 
-In the dev container:
+# 2. Open VS Code → Reopen in Container
 
-```bash
+# 3. Dev container terminal
 ./setup.sh
 ```
 
-Optional override:
+**Service URLs:**
 
-```bash
-./setup.sh --branch some-branch
-```
-
-Then open:
-
-- Jenkins: `http://localhost:8081`
-- SonarQube: `http://localhost:9000`
-- Grafana: `http://localhost:3030`
-- Prometheus: `http://localhost:9090`
-- Deployed app: `http://localhost:8080`
+| Service | URL |
+|---|---|
+| Spring PetClinic (app) | `http://localhost:8080` |
+| Jenkins | `http://localhost:8081` |
+| SonarQube | `http://localhost:9000` |
+| Prometheus | `http://localhost:9090` |
+| Grafana | `http://localhost:3030` |
+| OWASP ZAP | `http://localhost:8090` |
